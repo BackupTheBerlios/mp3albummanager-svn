@@ -1,0 +1,42 @@
+Description
+===========
+Mp3AlbumManager is an application to manage a mp3 album collection, written in Java and using an embedded database (H2).
+
+Features
+======== 
+* Fast storing of your mp3 album collection in a database within a few clicks
+* Extensive search function
+* Save album list as HTML
+* Create NFO with album info
+
+
+Requirements
+============
+* Java 1.6
+url: http://java.sun.com
+
+* H2 Database
+url: http://www.h2database.com
+license: EPLv1.0
+
+* JAudioTagger
+url: http://www.jthink.net/jaudiotagger
+license: LGPLv3
+
+* Swing Layout
+url: https://www.swing-layout.dev.java.net
+license: LGPL
+
+* Table Layout
+url: https://tablelayout.dev.java.net
+license: Clearthought Software License
+
+FAQ
+===
+To run this application you'll need these jars in your classpath:
+
+h2-1.1.108.jar
+jaudiotagger.jar
+swing-layout.jar
+TableLayout.jar
+
