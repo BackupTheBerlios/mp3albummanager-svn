@@ -13,6 +13,10 @@ public class AlbumDAO {
      * The JDBC url.
      */
     private static final String JDBC_URL = "jdbc:h2:";
+    /**
+     * The properties file for a database entry.
+     */
+    public static final String DB_PROPERTIES_FILE = "database.properties";
 
     private Properties dbProperties;
     private final DBEntry currentEntry;
@@ -80,7 +84,7 @@ public class AlbumDAO {
 
         String dirname = currentEntry.getDBDir() + "/." + currentEntry.getDBName();
         File dbDir = new File(dirname);
-        String filename = dirname + "/config.properties";
+        String filename = dirname  + "/" + DB_PROPERTIES_FILE;
         File propertiesFile = new File(filename);
 
         if(doCreate) {
@@ -97,7 +101,7 @@ public class AlbumDAO {
                     return false;
                 }
             } catch (IOException e) {
-                if(verbose) System.err.println("Error: Failed to create file\n\t" + dbDir);
+                if(verbose) System.err.println("Error: Failed to create file\n\t" + propertiesFile);
                 return false;
             }
             // write the properties to the file

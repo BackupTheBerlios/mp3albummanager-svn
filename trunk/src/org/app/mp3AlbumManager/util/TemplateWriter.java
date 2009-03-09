@@ -23,8 +23,12 @@ public class TemplateWriter {
 
 
         try {
-            FileInputStream fis = new FileInputStream(templateFilename);
-            BufferedReader reader=new BufferedReader( new InputStreamReader(fis));
+
+            //FileInputStream fis = new FileInputStream(templateFilename);
+            //BufferedReader reader=new BufferedReader( new InputStreamReader(fis));
+            InputStream is = getClass().getResourceAsStream(templateFilename);
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader reader = new BufferedReader(isr);
             while((line = reader.readLine()) != null) {
                 for(int i = 0; i < nrOfPatterns; i++) {
                     line = line.replaceAll(oldPatterns[i], replPatterns[i]);

@@ -14,11 +14,11 @@ public class Model {
     /**
      * The path to the nfo template file.
      */
-    private static final String NFO_TEMPLATE = "res/config/template.nfo";
+    private static final String NFO_TEMPLATE = "/config/template.nfo";
     /**
      * The path to the html template file.
      */
-    private static final String HTML_TEMPLATE = "res/config/template.html";
+    private static final String HTML_TEMPLATE = "/config/template.html";
     /**
      * The list of the genre names.
      */
@@ -97,7 +97,7 @@ public class Model {
             // read the rows in the recent file
             while ((path = br.readLine()) != null) {
                 // NOTE: readLine() seems to skip the first forward slash, so add it:
-                propPath = "/" + path + "/config.properties";
+                propPath = "/" + path + "/" + AlbumDAO.DB_PROPERTIES_FILE;
                 propFile = new File(propPath);
                 fis = new FileInputStream(propFile);
                 props.load(fis);

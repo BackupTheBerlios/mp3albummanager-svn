@@ -2,8 +2,8 @@ package org.app.mp3AlbumManager.util;
 
 import javax.swing.*;
 import java.util.Properties;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.awt.*;
 
 /**
@@ -11,7 +11,7 @@ import java.awt.*;
  */
 public class HandleProperties {
 
-    private static final String CONFIG_FILE = "res/config/config.properties"; // path to the configuration file
+    private static final String CONFIG_FILE = "/config/config.properties"; // path to the configuration file
     private static final String VERBOSE_PROPERTY_KEY = "Verbose.output";
     private static final String THEME_PROPERTY_KEY = "UI.look";
     private static final String[] THEMES = {
@@ -93,7 +93,8 @@ public class HandleProperties {
         Properties configuration = new Properties();
 
         try {
-            configuration.load(new FileInputStream(CONFIG_FILE));
+            InputStream is = getClass().getResourceAsStream(CONFIG_FILE);
+            configuration.load(is);
             // get verbose value
             String setting = configuration.getProperty(VERBOSE_PROPERTY_KEY);
             if(setting == null) {

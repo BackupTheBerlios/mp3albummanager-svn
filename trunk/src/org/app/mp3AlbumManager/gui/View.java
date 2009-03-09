@@ -4,6 +4,8 @@
 
 package org.app.mp3AlbumManager.gui;
 
+import org.app.mp3AlbumManager.util.ImageLoader;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -75,6 +77,18 @@ public class View extends JFrame {
         Container contentPane = getContentPane();
         contentPane.setLayout(new BorderLayout());
 
+        // Load images
+        ImageLoader loader = new ImageLoader();
+        ImageIcon imageNew = loader.getImage("/res/graphics/icons/database_add.png");
+        ImageIcon imageOpen = loader.getImage("/res/graphics/icons/database_go.png");
+        ImageIcon imageClose = loader.getImage("/res/graphics/icons/database_delete.png");
+        ImageIcon imageList = loader.getImage("/res/graphics/icons/application_view_list.png");
+        ImageIcon imageSearch = loader.getImage("/res/graphics/icons/find.png");
+        ImageIcon imageEdit = loader.getImage("/res/graphics/icons/cd_edit.png");
+        ImageIcon imageDelete = loader.getImage("/res/graphics/icons/cd_delete.png");
+        ImageIcon imageNfo = loader.getImage("/res/graphics/icons/page_white_text.png");
+        ImageIcon imageHtml = loader.getImage("/res/graphics/icons/html.png");
+
         //======== menuBarMain ========
         {
             //======== menuFile ========
@@ -84,19 +98,22 @@ public class View extends JFrame {
 
                 //---- menuItemNew ----
                 menuItemNew.setText("New");
-                menuItemNew.setIcon(new ImageIcon("res/graphics/icons/database_add.png"));
+                //menuItemNew.setIcon(new ImageIcon("/res/graphics/icons/database_add.png"));
+                menuItemNew.setIcon(imageNew);
                 menuItemNew.setMnemonic('N');
                 menuFile.add(menuItemNew);
 
                 //---- menuItemOpen ----
                 menuItemOpen.setText("Open");
-                menuItemOpen.setIcon(new ImageIcon("res/graphics/icons/database_go.png"));
+                //menuItemOpen.setIcon(new ImageIcon("/res/graphics/icons/database_go.png"));
+                menuItemOpen.setIcon(imageOpen);
                 menuItemOpen.setMnemonic('O');
                 menuFile.add(menuItemOpen);
 
                 //---- menuItemClose ----
                 menuItemClose.setText("Close");
-                menuItemClose.setIcon(new ImageIcon("res/graphics/icons/database_delete.png"));
+                //menuItemClose.setIcon(new ImageIcon("/res/graphics/icons/database_delete.png"));
+                menuItemClose.setIcon(imageClose);
                 menuItemClose.setMnemonic('C');
                 menuFile.add(menuItemClose);
 
@@ -114,13 +131,15 @@ public class View extends JFrame {
 
                 //---- menuItemList ----
                 menuItemList.setText("List");
-                menuItemList.setIcon(new ImageIcon("res/graphics/icons/application_view_list.png"));
+                //menuItemList.setIcon(new ImageIcon("/res/graphics/icons/application_view_list.png"));
+                menuItemList.setIcon(imageList);
                 menuItemList.setMnemonic('L');
                 menuDatabase.add(menuItemList);
 
                 //---- menuItemSearch ----
                 menuItemSearch.setText("Search");
-                menuItemSearch.setIcon(new ImageIcon("res/graphics/icons/find.png"));
+                //menuItemSearch.setIcon(new ImageIcon("/res/graphics/icons/find.png"));
+                menuItemSearch.setIcon(imageSearch);
                 menuItemSearch.setMnemonic('S');
                 menuDatabase.add(menuItemSearch);
             }
@@ -133,25 +152,29 @@ public class View extends JFrame {
 
                 //---- menuItemEdit ----
                 menuItemEdit.setText("Edit");
-                menuItemEdit.setIcon(new ImageIcon("res/graphics/icons/cd_edit.png"));
+                //menuItemEdit.setIcon(new ImageIcon("/res/graphics/icons/cd_edit.png"));
+                menuItemEdit.setIcon(imageEdit);
                 menuItemEdit.setMnemonic('E');
                 menuAlbum.add(menuItemEdit);
 
                 //---- menuItemOpen ----
                 menuItemDelete.setText("Delete");
-                menuItemDelete.setIcon(new ImageIcon("res/graphics/icons/cd_delete.png"));
+                //menuItemDelete.setIcon(new ImageIcon("/res/graphics/icons/cd_delete.png"));
+                menuItemDelete.setIcon(imageDelete);
                 menuItemDelete.setMnemonic('D');
                 menuAlbum.add(menuItemDelete);
 
                 //---- menuItemNFO ----
                 menuItemNFO.setText("Album NFO");
-                menuItemNFO.setIcon(new ImageIcon("res/graphics/icons/page_white_text.png"));
+                //menuItemNFO.setIcon(new ImageIcon("/res/graphics/icons/page_white_text.png"));
+                menuItemNFO.setIcon(imageNfo);
                 menuItemNFO.setMnemonic('A');
                 menuAlbum.add(menuItemNFO);
 
                 //---- menuItemHTML ----
                 menuItemHTML.setText("HTML List");
-                menuItemHTML.setIcon(new ImageIcon("res/graphics/icons/html.png"));
+                //menuItemHTML.setIcon(new ImageIcon("/res/graphics/icons/html.png"));
+                menuItemHTML.setIcon(imageHtml);
                 menuItemHTML.setMnemonic('H');
                 menuAlbum.add(menuItemHTML);
             }
@@ -165,55 +188,64 @@ public class View extends JFrame {
             //---- newButton ----
             newButton.setText("New");
             newButton.setMnemonic('N');
-            newButton.setIcon(new ImageIcon("res/graphics/icons/database_add.png"));
+            //newButton.setIcon(new ImageIcon("/res/graphics/icons/database_add.png"));
+            newButton.setIcon(imageNew);
             toolBar.add(newButton);
 
             //---- openButton ----
             openButton.setText("Open");
             openButton.setMnemonic('O');
-            openButton.setIcon(new ImageIcon("res/graphics/icons/database_go.png"));
+            //openButton.setIcon(new ImageIcon("/res/graphics/icons/database_go.png"));
+            openButton.setIcon(imageOpen);
             toolBar.add(openButton);
 
             //---- closeButton ----
             closeButton.setText("Close");
             closeButton.setMnemonic('C');
-            closeButton.setIcon(new ImageIcon("res/graphics/icons/database_delete.png"));
+            //closeButton.setIcon(new ImageIcon("/res/graphics/icons/database_delete.png"));
+            closeButton.setIcon(imageClose);
             toolBar.add(closeButton);
 
             //---- listButton ----
             listButton.setText("List");
             listButton.setMnemonic('L');
-            listButton.setIcon(new ImageIcon("res/graphics/icons/application_view_list.png"));
+            //listButton.setIcon(new ImageIcon("/res/graphics/icons/application_view_list.png"));
+            listButton.setIcon(imageList);
             toolBar.add(listButton);
 
             //---- searchButton ----
             searchButton.setText("Search");
             searchButton.setMnemonic('S');
-            searchButton.setIcon(new ImageIcon("res/graphics/icons/find.png"));
+            //searchButton.setIcon(new ImageIcon("/res/graphics/icons/find.png"));
+            searchButton.setIcon(imageSearch);
             toolBar.add(searchButton);
 
             //---- editButton ----
             editButton.setText("Edit");
             editButton.setMnemonic('E');
-            editButton.setIcon(new ImageIcon("res/graphics/icons/cd_edit.png"));
+            //editButton.setIcon(new ImageIcon("/res/graphics/icons/cd_edit.png"));
+            editButton.setIcon(imageEdit);
             toolBar.add(editButton);
 
             //---- deleteButton ----
             deleteButton.setText("Delete");
             deleteButton.setMnemonic('D');
-            deleteButton.setIcon(new ImageIcon("res/graphics/icons/cd_delete.png"));
+            //deleteButton.setIcon(new ImageIcon("/res/graphics/icons/cd_delete.png"));
+            deleteButton.setIcon(imageDelete);
             toolBar.add(deleteButton);
 
             //---- nfoButton ----
             nfoButton.setText("Album NFO");
             nfoButton.setMnemonic('A');
-            nfoButton.setIcon(new ImageIcon("res/graphics/icons/page_white_text.png"));
+            //nfoButton.setIcon(new ImageIcon("/res/graphics/icons/page_white_text.png"));
+            nfoButton.setIcon(imageNfo);
             toolBar.add(nfoButton);
 
             //---- htmlButton ----
             htmlButton.setText("HTML List");
             htmlButton.setMnemonic('H');
-            htmlButton.setIcon(new ImageIcon("res/graphics/icons/html.png"));
+            //htmlButton.setIcon(new ImageIcon("/res/graphics/icons/html.png"));
+            htmlButton.setIcon(imageHtml);
             toolBar.add(htmlButton);
         }
         contentPane.add(toolBar, BorderLayout.NORTH);

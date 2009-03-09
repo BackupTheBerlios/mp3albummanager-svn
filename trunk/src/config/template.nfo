@@ -1,0 +1,32 @@
+
+         _O_        _____         _<>_          ___
+       /     \     |     |      /      \      /  _  \
+      |==/=\==|    |[/_\]|     |==\==/==|    |  / \  |
+      |  O O  |    / O O \     |   ><   |    |  |"|  |
+       \  V  /    /\  -  /\  ,-\   ()   /-.   \  X  /
+       /`---'\     /`---'\   V( `-====-' )V   /`---'\
+       O'_:_`O     O'M|M`O   (_____:|_____)   O'_|_`O
+        -- --       -- --      ----  ----      -- --
+
+
+       #get_artist# - #get_album# (#get_year#)
+
+
+______________________Album Information______________________
+Artist...............: #get_artist#
+Album................: #get_album#
+Year.................: #get_year#
+Genre................: #get_genre#
+
+______________________Audio Information______________________
+Tag Version..........: #get_tagversion#
+Lame Version.........: #get_lame#
+Audio Bitrate........: #get_bitrate#
+Sample Rate .........: #get_samplerate#
+Audio Mode    .......: #get_mode#
+
+________________________Track Listing________________________
+
+#get_tracklist#
+
+Total length: (#get_totlength#)

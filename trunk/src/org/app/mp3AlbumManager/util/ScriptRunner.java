@@ -16,7 +16,7 @@ import java.util.Properties;
 
 public class ScriptRunner {
 
-    private static final String configfile = "res/config/config.properties";
+    private static final String configfile = "/config/config.properties";
     private static final String SCRIPT_PATH = "res/scripts/guessenc.sh";
 
     private int exitCode = -1;
