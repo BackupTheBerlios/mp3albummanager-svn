@@ -5,11 +5,15 @@ import java.awt.*;
 
 public class StartupPanel extends JPanel {
 
-    StartupPanel() {
+    private Color bgcolor;
+
+    StartupPanel(Color color) {
+
+        bgcolor = color;
         initComponents();
     }
 
     private void initComponents() {
-        setBackground(Color.lightGray);
+        setBackground(bgcolor);
     }
 }

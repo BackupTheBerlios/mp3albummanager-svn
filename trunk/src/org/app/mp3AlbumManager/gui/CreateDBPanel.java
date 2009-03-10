@@ -26,9 +26,11 @@ public class CreateDBPanel extends JPanel {
     private JTextField dbDirField;
     private JButton createButton;
     private JLabel messageLabel;
-
+    private Color bgcolor;
     
-    public CreateDBPanel() {
+    public CreateDBPanel(Color color) {
+
+        bgcolor = color;
         initComponents();
     }
 
@@ -50,7 +52,7 @@ public class CreateDBPanel extends JPanel {
         messageLabel.setForeground(Color.red);
 
         //======== this ========
-        setBackground(Color.lightGray);
+        setBackground(bgcolor);
 
         //---- headerLabel ----
         headerLabel.setFont(new Font("DejaVu Sans", Font.BOLD, 14));

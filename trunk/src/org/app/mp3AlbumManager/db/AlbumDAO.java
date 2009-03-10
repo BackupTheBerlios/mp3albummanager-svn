@@ -367,7 +367,6 @@ public class AlbumDAO {
      */
     public void createTables(Connection conn)  {
 
-        //TODO: fix problem with time values for albumlength & songlength
         String strCreateAlbumTable =
                 "CREATE TABLE IF NOT EXISTS Album (" +
                         "   directory   VARCHAR(256) PRIMARY KEY," +
@@ -416,10 +415,20 @@ public class AlbumDAO {
 
     }
 
+    public ResultSet executePreparedStmt(PreparedStatement prepStmt) {
+        try {
+            ResultSet result = prepStmt.executeQuery();
+            return result;
+
+        } catch(SQLException e) {
+            System.err.println("ERROR: SQLException when executing statement:\n\t" + prepStmt.toString() );
+            return null;
+        }
+    }
+
     /**
-     * Execute an insert query.
-     * @param prepStmt The PreparedStatement.
-     * @param connection The connection.
+     * Execute an insert, update, or delete query with a prepared statement query.
+     * @param prepStmt the PreparedStatement.
      */
     public void insertValues(PreparedStatement prepStmt) {
         try {

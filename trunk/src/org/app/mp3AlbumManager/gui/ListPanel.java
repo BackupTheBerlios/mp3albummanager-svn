@@ -17,8 +17,11 @@ public class ListPanel extends JPanel {
     //String[] albumlistData, songlistData;
     private GroupLayout layout;
 
-    public ListPanel() {
+    private Color bgcolor;
 
+    public ListPanel(Color color) {
+
+        bgcolor = color;
         initComponents();
 
     }
@@ -56,7 +59,7 @@ public class ListPanel extends JPanel {
         layout.setHonorsVisibility(emptyPanel, false);
         
         //======== this ========
-        setBackground(Color.lightGray);
+        setBackground(bgcolor);
 
         //---- albumListLabel ----
         albumListLabel.setLabelFor(albumList);

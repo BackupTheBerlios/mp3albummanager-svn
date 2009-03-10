@@ -9,23 +9,35 @@ import java.awt.event.ActionListener;
 
 public class InfoDBPanel extends JPanel {
 
-
     JButton updateButton;
     private JButton nextButton;
     private JLabel dbLabel;
     private JLabel albumLabel;
-    private JLabel messageLabel;
     private final String dbLabelText;
     private final String albumLabelText;
+    private Color bgcolor;
 
-    public InfoDBPanel(String dbLabelText, String albumLabelText) {
+    public JProgressBar progressBar;
+
+    /**
+     * Create a info panel.
+     * @param dbLabelText the text of the dbLabel (number of songs in the database).
+     * @param albumLabelText the text of the albumLabel (number of songs in the album directory).
+     * @param color the background color.
+     */
+    public InfoDBPanel(String dbLabelText, String albumLabelText, Color color) {
 
         this.dbLabelText = dbLabelText;
         this.albumLabelText = albumLabelText;
 
+        bgcolor = color;
+
         initComponents();
     }
 
+    /**
+     * Intitialize components in the panel.
+     */
     private void initComponents() {
 
         JLabel headerLabel = new JLabel("DATABASE INFO");
@@ -35,12 +47,16 @@ public class InfoDBPanel extends JPanel {
 
         updateButton = new JButton("UPDATE");
         nextButton = new JButton("NEXT");
-        messageLabel = new JLabel();
-        messageLabel.setForeground(Color.red);
+
+        progressBar = new JProgressBar();
+        //progressBar.setValue(0);
+        progressBar.setStringPainted(true);
+        //progressBar.setIndeterminate(true);
+        progressBar.setVisible(false);
 
 
         //======== this ========
-        setBackground(Color.lightGray);
+        setBackground(bgcolor);
 
         //---- headerLabel ----
         headerLabel.setFont(new Font("DejaVu Sans", Font.BOLD, 14));
@@ -78,7 +94,7 @@ public class InfoDBPanel extends JPanel {
                     )
                     .addContainerGap(208, Short.MAX_VALUE)
             )
-            .add(messageLabel)
+            .add(progressBar)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup()
@@ -94,16 +110,16 @@ public class InfoDBPanel extends JPanel {
                         .add(nextButton)
                         .add(updateButton))
                     .addContainerGap(204, Short.MAX_VALUE)
-                    )
-                    .add(messageLabel)
+                    .add(progressBar)
+                )
+
         );
     }
 
-    public void showPanel() {
-        setVisible(true);
-        super.repaint();
-    }
-
+    /**
+     * Set listener and action command for the buttons.
+     * @param al the listener.
+     */
     public void infoDBListener(ActionListener al) {
         nextButton.addActionListener(al);
         nextButton.setActionCommand("next");
@@ -111,13 +127,49 @@ public class InfoDBPanel extends JPanel {
         updateButton.setActionCommand("update");
     }
 
+    /**
+     * Make the panel visible.
+     */
+    public void showPanel() {
+        setVisible(true);
+        super.repaint();
+    }
+
+    /**
+     * Hide a button in the panel.
+     * @param button the button to hide.
+     */
     public void hideButton(JButton button) {
         button.setVisible(false);
     }
+
+    /**
+     * Show a button in the panel.
+     * @param button the button to show.
+     */
     public void showButton(JButton button) {
         button.setVisible(true);
     }
 
-    public void setDBLabelText(String text) { dbLabel.setText(text); }
+    /**
+     * Set the text of the dbLabel.
+     * @param text the text.
+     */
+    public void setDBLabelText(String text) { dbLabel.setText(text); revalidate(); }
 
+    /**
+     * Show a progress bar at the bottom of the panel (when updating the database).
+     * @param max the max value of the progress bar.
+     */
+    public void showProgressBar(int max) {
+
+        progressBar.setMinimum(0);
+        progressBar.setMaximum(max);
+        progressBar.setVisible(true);
+        //progressBar.paintImmediately( progressBar.getBounds() );
+        revalidate();
+    }
+
+    public JProgressBar getTheProgressbar() { return progressBar; }
+    
 }

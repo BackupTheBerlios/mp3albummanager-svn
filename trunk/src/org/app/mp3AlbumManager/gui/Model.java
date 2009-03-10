@@ -9,6 +9,7 @@ import java.io.*;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
 
 public class Model {
     /**
@@ -212,13 +213,13 @@ public class Model {
     }
 
     /**
-     * Clear the set of album directories.
+     * Clear the set of mp3 entries.
      */
     public void resetMp3Entries() { mp3entries.clear(); }
 
     /**
-     * Add an album directory to the set of album directories.
-     * @param dir The album directory.
+     * Add an entry to the set of mp3 entries.
+     * @param dir the entry to add.
      */
     public void addMp3Files(File dir) {
 
@@ -255,20 +256,20 @@ public class Model {
     }
 
     /**
-     * Get the number of album directories in the set of album directories.
-     * @return The number of album directories.
+     * Get the number of entries in the set of mp3 entries.
+     * @return the number of entries.
      */
     public int getNrOfMp3s() { return mp3entries.size(); }
 
     /**
-     * Get the set of album directories.
-     * @return The set of album directories.
+     * Get the set of mp3 entries.
+     * @return The set of mp3 entries.
      */
     public Set<String[]> getMp3entries() { return mp3entries; }
 
     /**
-     * Get a sorted list of album directories.
-     * @return The list of album directories.
+     * Get a sorted list of mp3 entries.
+     * @return the sorted list of mp3 entries.
      */
     public List<String[]> getSortedMp3entries() {
         sortedMp3entries.addAll(mp3entries);
@@ -277,8 +278,8 @@ public class Model {
     }
 
     /**
-     * Get the number of album directories in the sorted list of album directories.
-     * @return The number of album directories.
+     * Get number of entries in the sorted list of mp3 entries.
+     * @return the number of entries.
      */
     public int getNrOfAlbums() {
         for(String[] dirname : getSortedMp3entries() ) {
@@ -286,6 +287,7 @@ public class Model {
         }
         return albumEntries.size();
     }
+
 
     //############ Album / Song methods #################
     /**
@@ -313,22 +315,35 @@ public class Model {
      * @param queries The queries to the database, to get the replace patterns to generate the nfo content.
      * @return The html content.
      */
-    public StringBuffer getHtmlContent(String musicDir, String searchQuery, String[] queries) {
+    public StringBuffer getHtmlContent(String musicDir, String searchQuery, String[] albumTitles) {
+
+        int nrOfTitles = albumTitles.length;
+        // generate prepared statements
+        // not string queries, to avoid problems with special characters in titles
+        String prepSelect = "SELECT directory, artist, title FROM Album WHERE title=?";
 
         // CONNECTION -> SELECT ALBUM
-        StringBuffer buf = new StringBuffer("\n"); // start with a newline
-        for(String query : queries) {
-            ResultSet rs = getDAO().doSelectQuery(query, getDAO().getConnection(), false);
+        // store the link lines in an array to sort them later
+        String[] links = new String[nrOfTitles];
+        for(int i = 0; i < nrOfTitles; i++)  {
             try {
+                PreparedStatement stmt = getDAO().getConnection().prepareStatement(prepSelect);
+                stmt.setString(1, albumTitles[i]);
+                ResultSet rs = getDAO().executePreparedStmt(stmt);
                 while( rs.next() ) {
                     String directory = rs.getString("directory");
                     String artist = rs.getString("artist");
                     String title = rs.getString("title");
-                    buf.append("<p><a href='").append(directory).append("'>").append(artist).append(" - ").append(title).append("</a></p>\n");
+                    links[i] = "<p><a href='" + directory + "'>" + artist + " - " + title + "</a></p>\n";
                 }
             } catch(SQLException e) { e.printStackTrace(); }
         }
-
+        // sort the array of links
+        Arrays.sort(links);
+        // output the links to a string buffer
+        StringBuffer buf = new StringBuffer();
+        for(String line : links) { buf.append(line); }
+        
         String[] oldPatterns = new String[] { "#music_dir#", "#search_query#", "#html_list#" };
         String[] replPatterns = new String[] { musicDir, searchQuery, buf.toString() };
 
@@ -422,10 +437,10 @@ public class Model {
             out.close();
         } catch (Throwable e) { e.printStackTrace(); }
     }
-    
+
 }
 
- //############ Inner classes #################
+//############ Inner classes #################
 /**
  * FileFilter accepting directories and files with .mp3 extension.
  */

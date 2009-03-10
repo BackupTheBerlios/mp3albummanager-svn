@@ -18,6 +18,9 @@ import java.awt.*;
 import java.io.File;
 import java.sql.*;
 import java.util.Set;
+import java.util.Arrays;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 
 public class Controller implements ActionListener {
 
@@ -32,14 +35,22 @@ public class Controller implements ActionListener {
     private InfoDBPanel dbInfoPanel;
     private ListPanel listPanel;
     private DetailsPanel detailsPanel;
-    private int nrOfInsertedSongs = 0;
 
-    public Controller(Model m, View v, boolean recent, boolean verbose) {
+    public int nrOfSongsInDB;
+
+    private Task updateTask;
+
+    private Color bgcolor;
+
+    public Controller(Model m, View v, boolean recent, boolean verbose, Color color) {
 
         view = v;
         model = m;
         this.verbose = verbose;
         this.anyRecent = recent;
+        bgcolor = color;
+
+        nrOfSongsInDB = 0;
 
         // Add action listener to buttons in view
         view.menuActionListeners(this);
@@ -94,7 +105,7 @@ public class Controller implements ActionListener {
                 view.enableButton(view.newButton);
 
                 // show the empty startup panel
-                startupPanel = new StartupPanel();
+                startupPanel = new StartupPanel(bgcolor);
                 view.addPanel(startupPanel);
                 showingClose = true;
             }
@@ -115,7 +126,7 @@ public class Controller implements ActionListener {
                 view.enableMenuItem(view.menuItemClose);
                 view.enableButton(view.closeButton);
 
-                createPanel = new CreateDBPanel();
+                createPanel = new CreateDBPanel(bgcolor);
                 createPanel.createDBListener( new OpenAndCreatePanelListener() );
 
                 createPanel.showPanel();
@@ -139,7 +150,7 @@ public class Controller implements ActionListener {
                 view.enableMenuItem(view.menuItemClose);
                 view.enableButton(view.closeButton);
 
-                openPanel = new OpenDBPanel();
+                openPanel = new OpenDBPanel(bgcolor);
                 openPanel.openDBButtonListener( new OpenAndCreatePanelListener() );
                 openPanel.openDBItemListener( new OpenAndCreatePanelListener() );
 
@@ -193,16 +204,9 @@ public class Controller implements ActionListener {
 
             // get album list from listPanel
             String[] albums = listPanel.getElementsFromAlbumList();
-            // generate queries
-            int size = albums.length;
-            String[] queries = new String[size];
-            String title;
-            for(int i = 0; i < size; i++) {
-                title = albums[i];
-                queries[i] = "SELECT directory, artist, title FROM Album WHERE title='" + title + "'";
-            }
+
             // get generated html content
-            StringBuffer content = model.getHtmlContent(musicDir, searchQuery, queries);
+            StringBuffer content = model.getHtmlContent(musicDir, searchQuery, albums);
 
             // show jtextarea in a joptionpane
             int option = JOptionPane.showConfirmDialog(null, "Save HTML and lanuch in a browser", "Save HTML?", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -219,6 +223,7 @@ public class Controller implements ActionListener {
 
         } else if( actionCommand.equals("edit") ) {
 
+            //TODO: implement actions for Edit
             // make fields editable and show buttons
             detailsPanel.setEditableFields(true);
             detailsPanel.setVisibleButtons(true);
@@ -237,7 +242,7 @@ public class Controller implements ActionListener {
 
     /**
      * Actions for buttons and combobox in openDBPanel and createDBPanel.
-      */
+     */
     private class OpenAndCreatePanelListener implements ActionListener, ItemListener {
 
         /**
@@ -359,10 +364,10 @@ public class Controller implements ActionListener {
             //CONNECTION -> SELECT QUERY
             String query = "SELECT filename FROM Song";
             ResultSet rs = model.getDAO().doSelectQuery( query, model.getDAO().getConnection(), false);
-            int nrOfRecords = 0;
+            nrOfSongsInDB = 0;
             try {
                 while(rs.next()) {
-                    nrOfRecords++;
+                    nrOfSongsInDB++;
                 }
             } catch(SQLException e) { e.printStackTrace(); }
 
@@ -386,18 +391,18 @@ public class Controller implements ActionListener {
 
 
             // format text to send to infopanel labels
-            String firstLabel = String.format("%d songs in database.", nrOfRecords);
+            String firstLabel = String.format("%d songs in database.", nrOfSongsInDB);
             String secondLabel = String.format("%d songs found in album directory.", model.getNrOfMp3s() );
 
-            dbInfoPanel = new InfoDBPanel(firstLabel, secondLabel);
+            dbInfoPanel = new InfoDBPanel(firstLabel, secondLabel, bgcolor);
             dbInfoPanel.infoDBListener( new InfoPanelListener() );
 
             //TODO: update db option should be more sophisticated...
             //      db entry exists though file has been deleted -> deleted
             //      file exists but not found in db -> new
 
-            // show update button if nrOfMp3s != nrOfRecords
-            if(model.getNrOfMp3s() != nrOfRecords) { dbInfoPanel.showButton(dbInfoPanel.updateButton); }
+            // show update button if nr of mp3s != nr of records
+            if( model.getNrOfMp3s() != nrOfSongsInDB) { dbInfoPanel.showButton(dbInfoPanel.updateButton); }
 
             dbInfoPanel.showPanel();
             view.addPanel(dbInfoPanel);
@@ -406,7 +411,7 @@ public class Controller implements ActionListener {
         }
     }
 
-    private class InfoPanelListener implements ActionListener {
+    private class InfoPanelListener implements ActionListener, PropertyChangeListener {
         /**
          * Actions for buttons in dbInfoPanel.
          * @param ae The ActionEvent.
@@ -434,7 +439,7 @@ public class Controller implements ActionListener {
                 view.enableMenuItem(view.menuItemHTML);
                 view.enableButton(view.htmlButton);
 
-                listPanel = new ListPanel();
+                listPanel = new ListPanel(bgcolor);
                 listPanel.selectionPanelListener( new ListPanelListener() );
 
                 //CONNECTION -> SELECT QUERIES
@@ -458,7 +463,7 @@ public class Controller implements ActionListener {
                 view.addPanel(listPanel, BorderLayout.WEST);
 
                 //add the detailsPanel (fields empty until album or song is selected)
-                detailsPanel = new DetailsPanel();
+                detailsPanel = new DetailsPanel(bgcolor);
                 detailsPanel.showPanel();
                 view.addPanel(detailsPanel, BorderLayout.CENTER);
 
@@ -466,85 +471,152 @@ public class Controller implements ActionListener {
 
             } else if( actionCommand.equals("update") ) {
 
-                // scan files in albums dir, and add new records to db
-                // get current selected entry
-                DBEntry entry = model.getCurrentEntry();
-                File currentMp3dir = entry.getMp3Dir();
+                // create the update database task and add a property change listener to monitor progress
+                updateTask = new Task();
+                updateTask.addPropertyChangeListener(this);
+                updateTask.execute();
 
-                ReadDirectories read = new ReadDirectories(currentMp3dir, true);
-                read.getFiles();
-
-                if(verbose) System.out.println("\nUPDATING DATABASE:");
-                //CONNECTION -> INSERT QUERIES
-                String insertAlbum = "INSERT INTO Album (directory, subdirs, tracks, artist, title, various, albumlength, " +
-                        "albumyear, genre, tag, lame, bitrate, vbr, frequency, mode) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                String insertSongs = "INSERT INTO Song (filename, subdir, track, artist, title, songlength, songyear, " +
-                        "genre, tag, lame, bitrate, vbr, frequency, mode) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                PreparedStatement stmtAlbum, stmtSong;
-                nrOfInsertedSongs = 0;
-                try {
-                    Set<Album> albumSet = read.getCollection().getAlbumSet();
-                    for(Album a : albumSet) {
-                        a.fillKeys();
-                        a.sortByValues();
-                        a.sortSongs();
-
-                        stmtAlbum = model.getDAO().getConnection().prepareStatement(insertAlbum);
-                        stmtAlbum.setString(1, a.getFilename().getPath() );
-                        stmtAlbum.setObject(2, a.getSubdirs() ); // does this really work??
-                        stmtAlbum.setInt(3, Integer.parseInt( a.getTrack() ) );
-                        stmtAlbum.setString(4, a.getArtist() );
-                        stmtAlbum.setString(5, a.getTitle() );
-                        stmtAlbum.setBoolean(6, a.getVarious() );
-                        stmtAlbum.setLong(7, a.getLength());
-                        stmtAlbum.setString(8, a.getYear() );
-                        stmtAlbum.setString(9, a.getGenre() );
-                        stmtAlbum.setString(10, a.getTag() );
-                        stmtAlbum.setString(11, a.getLame() );
-                        stmtAlbum.setInt(12, a.getAlbumBitrate() );
-                        stmtAlbum.setBoolean(13, a.getVbr() );
-                        stmtAlbum.setInt(14, a.getFrequency() );
-                        stmtAlbum.setString(15, a.getMode() );
-
-                        model.getDAO().insertValues(stmtAlbum);
-
-                        if(verbose) System.out.println( a.toString() );
-
-                        for(Song s : a.getSonglist() ) {
-                            stmtSong = model.getDAO().getConnection().prepareStatement(insertSongs);
-                            stmtSong.setString(1, s.getFilename().getPath() );
-                            stmtSong.setString(2, s.getSubdir() );
-                            stmtSong.setString(3, s.getTrack() );
-                            stmtSong.setString(4, s.getArtist() );
-                            stmtSong.setString(5, s.getTitle() );
-                            stmtSong.setLong(6, s.getLength() );
-                            stmtSong.setString(7, s.getYear() );
-                            stmtSong.setString(8, s.getGenre() );
-                            stmtSong.setString(9, s.getTag() );
-                            stmtSong.setString(10, s.getLame() );
-                            stmtSong.setInt(11, s.getBitrate() );
-                            stmtSong.setBoolean(12, s.getVbr() );
-                            stmtSong.setInt(13, s.getFrequency() );
-                            stmtSong.setString(14, s.getMode() );
-
-                            model.getDAO().insertValues(stmtSong);
-                            nrOfInsertedSongs++;
-
-                            if(verbose) System.out.println(s.getTrack() + " - " + s.getTitle() );
-
-                        }
-                        if(verbose) System.out.println();
-                    }
-
-                } catch(SQLException e) { e.printStackTrace(); }
-
-                // update text in labels
-                dbInfoPanel.setDBLabelText( String.format("%d songs in database.", nrOfInsertedSongs) );
-                // hide the update button
-                dbInfoPanel.hideButton(dbInfoPanel.updateButton);
             }
+        }
+
+        /**
+         * Listener for the progress monitor.
+         * @param evt the change event. 
+         */
+        public void propertyChange(PropertyChangeEvent evt) {
+
+            if( "progress" == evt.getPropertyName() ) {
+
+                int progress = (Integer) evt.getNewValue();
+                dbInfoPanel.progressBar.setValue(progress);
+            }
+        }
+
+    }
+
+    /**
+     * Inner class Task is a sub-class of SwingWorker.
+     * The task instance invokes the doInBackground in a separate thread.
+     */
+    class Task extends SwingWorker<Void, Void> {
+
+        /**
+         * This is where the update database task is actually executed.
+         * <br />
+         * Using a background thread instead of the event-dispatching thread prevents the user interface from freezing while the task is running. 
+         */
+        @Override
+        public Void doInBackground() {
+
+            if(verbose) System.out.println("\nBACKGROUND TASK: started");
+            // initialize task progress
+            setProgress(0);
+            // show the progressbar, max value is set to twice the number of mp3s in the entry's directory (one for reading the tags an one for inserting into database)
+            dbInfoPanel.showProgressBar( 2 * model.getNrOfMp3s() );
+
+            // get current selected entry
+            DBEntry entry = model.getCurrentEntry();
+            // get album directory of entry
+            File currentMp3dir = entry.getMp3Dir();
+            // create an instance of ReadDirectories to read the mp3 files in the album directory
+            ReadDirectories read = new ReadDirectories(currentMp3dir, true);
+            // read the tags of the files, pass the progressbar along to update progress
+            read.getFiles( dbInfoPanel.getTheProgressbar() );
+
+            // get the progress (should be equal to number of read tags
+            int progressValue = dbInfoPanel.getTheProgressbar().getValue();
+
+
+            if(verbose) System.out.println("\nUPDATING DATABASE:");
+            //CONNECTION -> INSERT QUERIES
+            String insertAlbum = "INSERT INTO Album (directory, subdirs, tracks, artist, title, various, albumlength, " +
+                    "albumyear, genre, tag, lame, bitrate, vbr, frequency, mode) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String insertSongs = "INSERT INTO Song (filename, subdir, track, artist, title, songlength, songyear, " +
+                    "genre, tag, lame, bitrate, vbr, frequency, mode) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement stmtAlbum, stmtSong;
+
+            int inserted = 0;
+            try {
+                Set<Album> albumSet = read.getCollection().getAlbumSet();
+                for(Album a : albumSet) {
+                    a.fillKeys();
+                    a.sortByValues();
+                    a.sortSongs();
+
+                    stmtAlbum = model.getDAO().getConnection().prepareStatement(insertAlbum);
+                    stmtAlbum.setString(1, a.getFilename().getPath() );
+                    stmtAlbum.setObject(2, a.getSubdirs() ); // does this really work??
+                    stmtAlbum.setInt(3, Integer.parseInt( a.getTrack() ) );
+                    stmtAlbum.setString(4, a.getArtist() );
+                    stmtAlbum.setString(5, a.getTitle() );
+                    stmtAlbum.setBoolean(6, a.getVarious() );
+                    stmtAlbum.setLong(7, a.getLength());
+                    stmtAlbum.setString(8, a.getYear() );
+                    stmtAlbum.setString(9, a.getGenre() );
+                    stmtAlbum.setString(10, a.getTag() );
+                    stmtAlbum.setString(11, a.getLame() );
+                    stmtAlbum.setInt(12, a.getAlbumBitrate() );
+                    stmtAlbum.setBoolean(13, a.getVbr() );
+                    stmtAlbum.setInt(14, a.getFrequency() );
+                    stmtAlbum.setString(15, a.getMode() );
+
+                    model.getDAO().insertValues(stmtAlbum);
+
+                    if(verbose) System.out.println( a.toString() );
+
+                    for(Song s : a.getSonglist() ) {
+                        stmtSong = model.getDAO().getConnection().prepareStatement(insertSongs);
+                        stmtSong.setString(1, s.getFilename().getPath() );
+                        stmtSong.setString(2, s.getSubdir() );
+                        stmtSong.setString(3, s.getTrack() );
+                        stmtSong.setString(4, s.getArtist() );
+                        stmtSong.setString(5, s.getTitle() );
+                        stmtSong.setLong(6, s.getLength() );
+                        stmtSong.setString(7, s.getYear() );
+                        stmtSong.setString(8, s.getGenre() );
+                        stmtSong.setString(9, s.getTag() );
+                        stmtSong.setString(10, s.getLame() );
+                        stmtSong.setInt(11, s.getBitrate() );
+                        stmtSong.setBoolean(12, s.getVbr() );
+                        stmtSong.setInt(13, s.getFrequency() );
+                        stmtSong.setString(14, s.getMode() );
+
+                        // insert song into database and increase number of inserted songs
+                        model.getDAO().insertValues(stmtSong);
+                        // increase number of inserted songs
+                        inserted++;
+                        // update progress
+                        progressValue++;
+                        // update progress bar
+                        dbInfoPanel.getTheProgressbar().setValue(progressValue);
+
+                        if(verbose) System.out.println(s.getTrack() + " - " + s.getTitle() );
+                        nrOfSongsInDB = inserted;
+                    } // end song iteration
+                    if(verbose) System.out.println();
+
+                } // end album iteration
+
+            } catch(SQLException e) { e.printStackTrace(); }
+            return null;
+        }
+
+
+        /**
+         * When the update database task is complete, the instance invokes the done method in the event-dispatching thread.
+         * <br />
+         * When done in this case the update button in the dbInfoPanel is hidden.
+         */
+        @Override
+        public void done() {
+            // update text in labels
+            dbInfoPanel.setDBLabelText( String.format("%d songs in database.", nrOfSongsInDB) );
+            if(verbose) System.out.println("\nTASK DONE: nrOfSongsInDB = " + nrOfSongsInDB);
+            // hide the update button
+            dbInfoPanel.hideButton(dbInfoPanel.updateButton);
+
         }
     }
 
@@ -579,7 +651,7 @@ public class Controller implements ActionListener {
                         view.enableMenuItem(view.menuItemNFO);
                         view.enableButton(view.nfoButton);
 
-                        //TODO: ---> get album info from db and show in panel
+                        //TODO: get album info from db and show in panel
 
 
 

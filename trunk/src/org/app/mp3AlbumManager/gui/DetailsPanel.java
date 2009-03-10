@@ -25,7 +25,11 @@ public class DetailsPanel extends JPanel implements ItemListener {
 
     private JButton cancelButton, updateButton;
 
-    public DetailsPanel() {
+    private Color bgcolor;
+
+    public DetailsPanel(Color color) {
+
+        bgcolor = color;
         initComponents();
     }
 
@@ -125,7 +129,7 @@ public class DetailsPanel extends JPanel implements ItemListener {
         ( (TableLayout) getLayout() ).setVGap(5);
 
         //======== this ========
-        setBackground(Color.lightGray);
+        setBackground(bgcolor);
         
         //---- detailsLabel ----
         detailsLabel.setText("DETAILS");
@@ -242,12 +246,12 @@ public class DetailsPanel extends JPanel implements ItemListener {
 
         //---- isVbrRadioButton ----
         isVbrRadioButton.setText("Yes");
-        isVbrRadioButton.setBackground(Color.lightGray);
+        isVbrRadioButton.setBackground(bgcolor);
         add(isVbrRadioButton, new TableLayoutConstraints(1, 12, 1, 12, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
         //---- isNotVbrRadioButton ----
         isNotVbrRadioButton.setText("No");
         isNotVbrRadioButton.setSelected(true);
-        isNotVbrRadioButton.setBackground(Color.lightGray);
+        isNotVbrRadioButton.setBackground(bgcolor);
         add(isNotVbrRadioButton, new TableLayoutConstraints(2, 12, 2, 12, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
         //---- vbrButtonGroup ----
         vbrButtonGroup.add(isVbrRadioButton);
@@ -255,12 +259,12 @@ public class DetailsPanel extends JPanel implements ItemListener {
 
         //---- isVariousRadioButton ----
         isVariousRadioButton.setText("Yes");
-        isVariousRadioButton.setBackground(Color.lightGray);
+        isVariousRadioButton.setBackground(bgcolor);
         add(isVariousRadioButton, new TableLayoutConstraints(1, 4, 1, 4, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
         //---- isNotVariousRadioButton ----
         isNotVariousRadioButton.setText("No");
         isNotVariousRadioButton.setSelected(true);
-        isNotVariousRadioButton.setBackground(Color.lightGray);
+        isNotVariousRadioButton.setBackground(bgcolor);
         add(isNotVariousRadioButton, new TableLayoutConstraints(2, 4, 2, 4, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
         //---- variousButtonGroup ----
         variousButtonGroup.add(isVariousRadioButton);

@@ -12,6 +12,7 @@ import org.jaudiotagger.tag.id3.AbstractID3v2Tag;
 import org.jaudiotagger.tag.id3.ID3v24Frames;
 import org.jaudiotagger.tag.id3.valuepair.TextEncoding;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,6 +30,10 @@ public class ReadDirectories {
     private File currentAlbumdir;
     private final Mp3Collection collection;
 
+    private int nrOfMp3s;
+
+    JProgressBar theProgressBar;
+
     public ReadDirectories(File dir, boolean verbose) {
 
         this.verbose = verbose;
@@ -37,6 +42,8 @@ public class ReadDirectories {
         currentAlbum = null;
         currentAlbumdir = null;
         collection = new Mp3Collection();
+
+        nrOfMp3s = 0;
 
         //ScriptRunner runThis = new ScriptRunner();
     }
@@ -63,9 +70,10 @@ public class ReadDirectories {
      * Traverse files in path and send to scanFile().
      * @see ReadDirectories.scanFile()
      */
-    public void getFiles() {
+    public void getFiles(JProgressBar theProgressBar) {
 
         if(verbose) { System.out.println("\nREADING FILES:"); }
+        this.theProgressBar = theProgressBar;
 
         try {
             new FileTraversal() {
@@ -100,7 +108,6 @@ public class ReadDirectories {
         String mode;
         Integer length, bitrate, frequency;
         Boolean vbr;
-
 
         if(verbose) System.out.println("FILE: " + file);
         try {
@@ -156,7 +163,7 @@ public class ReadDirectories {
 
             String bitrateAsString = "" + audioHeader.getBitRateAsNumber(); // kbps
             bitrate = Integer.parseInt(bitrateAsString);
-            vbr = (Boolean) audioHeader.isVariableBitRate();
+            vbr = audioHeader.isVariableBitRate();
             frequency = audioHeader.getSampleRateAsNumber(); // Hz
 
             mode = audioHeader.getChannels(); // Stereo, Mono, etc
@@ -166,7 +173,8 @@ public class ReadDirectories {
                     genre, tag, lame, bitrate, vbr, frequency, mode);
 
             if(verbose) System.out.println( song.toString() );
-
+            nrOfMp3s++;
+            theProgressBar.setValue(nrOfMp3s);
             // get the parent dir
             File parentDir = file.getParentFile();
             // check if parent dirname is a subdir (ie dirname starts with 'cd')

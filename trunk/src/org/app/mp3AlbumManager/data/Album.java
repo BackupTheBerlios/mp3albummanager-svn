@@ -5,8 +5,6 @@ import org.app.mp3AlbumManager.util.ValueSortMap;
 import java.util.*;
 import java.io.File;
 
-//TODO: make this a subclass of CollectionItem
-
 public class Album extends CollectionItem implements Comparator {
 
     private Boolean variousArtists = false;

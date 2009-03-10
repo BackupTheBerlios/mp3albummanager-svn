@@ -22,7 +22,11 @@ public class OpenDBPanel extends JPanel {
     private JButton openButton;
     private JLabel messageLabel;
 
-    public OpenDBPanel() {
+    private Color bgcolor;
+
+    public OpenDBPanel(Color color) {
+
+        bgcolor = color;
         initComponents();
     }
 
@@ -46,7 +50,7 @@ public class OpenDBPanel extends JPanel {
         openButton = new JButton("OPEN");
 
         //======== this ========
-        setBackground(Color.lightGray);
+        setBackground(bgcolor);
 
         //---- headerLabel ----
         headerLabel.setFont(new Font("DejaVu Sans", Font.BOLD, 14));
