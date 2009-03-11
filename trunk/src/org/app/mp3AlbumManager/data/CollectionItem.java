@@ -125,17 +125,17 @@ public abstract class CollectionItem {
     public void setTitle(String t) { title = t; }
 
     /**
-     * Set the length in seconds.
-     * @param l the length in seconds.
-     */
-    public void setLength(Integer l) { length = l; }
-
-    /**
      * Set the release year.
      * TODO: check if parameter is a year.
      * @param y the release year
      */
     public void setYear(String y) { year = y; }
+
+    /**
+     * Set the length in seconds.
+     * @param l the length in seconds.
+     */
+    public void setLength(Integer l) { length = l; }
 
     /**
      * Set the genre.

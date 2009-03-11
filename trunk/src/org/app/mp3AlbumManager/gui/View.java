@@ -250,7 +250,7 @@ public class View extends JFrame {
         }
         contentPane.add(toolBar, BorderLayout.NORTH);
 
-        setSize(795, 500); // 640, 800
+        setSize(825, 500); // 640, 800
         setLocationRelativeTo(getOwner());
         setVisible(true);
     }

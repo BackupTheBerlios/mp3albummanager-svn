@@ -343,7 +343,7 @@ public class Model {
         // output the links to a string buffer
         StringBuffer buf = new StringBuffer();
         for(String line : links) { buf.append(line); }
-        
+
         String[] oldPatterns = new String[] { "#music_dir#", "#search_query#", "#html_list#" };
         String[] replPatterns = new String[] { musicDir, searchQuery, buf.toString() };
 
@@ -354,11 +354,13 @@ public class Model {
 
     /**
      * Get the nfo content for the Save as NFO command.
-     * @param query The query to the database, to get the replace patterns to generate the html content.
+     * @param albumTitle The query to the database, to get the replace patterns to generate the html content.
      * @return The nfo content.
      */
-    public StringBuffer getNfoContent(String query) {
-        //TODO: get genre (it's a string but try to parse it as int to get genre from array)
+    public StringBuffer getNfoContent(String albumTitle) {
+
+        TemplateWriter template = new TemplateWriter();
+
         String[] oldPatterns = new String[] {
                 "#get_artist#",
                 "#get_album#",
@@ -369,13 +371,17 @@ public class Model {
                 "#get_bitrate#",
                 "#get_samplerate#",
                 "#get_mode#",
-                //"#get_tracklist#",
+                "#get_tracklist#",
                 "#get_totlength#"
         };
         // CONNECTION -> SELECT ALBUM
-        ResultSet rs = getDAO().doSelectQuery(query, getDAO().getConnection(), false);
+        String prepSelect =  "SELECT * FROM Album WHERE title=?";
+
         String[] replPatterns = null;
         try {
+            PreparedStatement stmt = getDAO().getConnection().prepareStatement(prepSelect);
+            stmt.setString(1, albumTitle);
+            ResultSet rs = getDAO().executePreparedStmt(stmt);
             while( rs.next() ) {
                 String bitratePrefix = ( rs.getBoolean("vbr") ) ? "VBR ~" : "CBR ";
                 String bitrate = ( rs.getInt("bitrate") != 0 ) ? bitratePrefix + rs.getInt("bitrate") + " kbps" : "";
@@ -387,6 +393,9 @@ public class Model {
                 String lame = ( rs.getString("lame") != null ) ? rs.getString("lame") : "";
                 String frequency = ( rs.getInt("frequency") != 0 ) ? rs.getInt("frequency") + " Hz" : "";
                 String mode = ( rs.getString("mode") != null) ? rs.getString("mode") : "";
+                Boolean various = rs.getBoolean("various");
+                Object subdirs = rs.getObject("subdirs");
+                String tracklist = getTracklisting(albumTitle, various, subdirs);
                 int length = rs.getInt("albumlength");
                 String albumlength = ( length != 0) ? getLengthAsString(length) : "";
                 replPatterns = new String[] {
@@ -399,15 +408,72 @@ public class Model {
                         bitrate,
                         frequency,
                         mode,
-                        //TODO: get song list
+                        tracklist,
                         albumlength
                 };
             }
         } catch(SQLException e) { e.printStackTrace(); }
 
         // send properties to template writer and get the nfo content
-        TemplateWriter template = new TemplateWriter();
         return template.readReplace(NFO_TEMPLATE, oldPatterns, replPatterns);
+    }
+
+    /**
+     * Generate the track listing.
+     * <br />
+     * Get song track, title, artist, length from database and construct the track listing lines.
+     * Add artist to the lines if it's a various artists album.
+     * Add subdir if it's a multiple cd album.
+     * Right align the song length info at each line.
+     * @param albumTitle the album title.
+     * @param various whether a various artists album.
+     * @param subdirs sub directories of the album.
+     * @return the track listing.
+     */
+    public String getTracklisting(String albumTitle, Boolean various, Object subdirs) {
+
+        ArrayList<String> trackTitlelines = new ArrayList<String>();
+        ArrayList<String> lengthlines = new ArrayList<String>();
+        int maxlength = 0;
+
+        String prepSelect =  "SELECT track, title, artist, songlength FROM Song WHERE album=?";
+        try {
+            PreparedStatement stmt = getDAO().getConnection().prepareStatement(prepSelect);
+            stmt.setString(1, albumTitle);
+            ResultSet rs = getDAO().executePreparedStmt(stmt);
+            while( rs.next() ) {
+
+                //TODO: ---> append subdirs to track listing
+
+                StringBuffer tracklist = new StringBuffer();
+                tracklist.append( rs.getString("track") ).append(" - ");
+                if(various) { tracklist.append( rs.getString("artist") ).append(" - "); }
+                tracklist.append( rs.getString("title") );
+                // keep track of the longest trackTitle line
+                int linelength = tracklist.toString().length();
+                if(linelength > maxlength) maxlength = linelength;
+                // store track + (artist) + title in arraylist
+                trackTitlelines.add( tracklist.toString() );
+               // store length in a separate arraylist, to format right alignment
+                lengthlines.add( " (" + getLengthAsString( rs.getInt("songlength") ) + ")\n");
+            }
+
+        } catch(SQLException e) { e.printStackTrace(); }
+
+        StringBuffer ret = new StringBuffer();
+        // iterate over trackTitle lines and append spaces to the length of the longest line (maxlength)
+        for(int i = 0; i < trackTitlelines.size(); i++) {
+            int spaces = maxlength - trackTitlelines.get(i).length();
+            if(spaces > 0) {
+                StringBuilder build = new StringBuilder( maxlength + trackTitlelines.get(i).length() );
+                build.append( trackTitlelines.get(i) );
+                for(int j = 0; j < spaces; j++) build.append(' ');
+                trackTitlelines.set( i, build.toString() );
+            }
+            ret.append(trackTitlelines.get(i)).append( lengthlines.get(i) );
+        }
+
+        return ret.toString();
     }
 
     /**

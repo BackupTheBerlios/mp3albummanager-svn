@@ -173,8 +173,8 @@ public class Controller implements ActionListener {
 
             // get selected album in listPanel
             String selectedAlbum = (String) listPanel.albumList.getSelectedValue();
-            String query = "SELECT * FROM Album WHERE title='"+selectedAlbum+"'";
-            StringBuffer content = model.getNfoContent(query);
+            // get the nfo content
+            StringBuffer content = model.getNfoContent(selectedAlbum);
 
             // get a preformatted jtextarea from view
             JTextArea nfoContent = view.setTextAreaContent( content.toString() );
@@ -500,6 +500,7 @@ public class Controller implements ActionListener {
      */
     class Task extends SwingWorker<Void, Void> {
 
+        long startTimeMs;
         /**
          * This is where the update database task is actually executed.
          * <br />
@@ -509,6 +510,8 @@ public class Controller implements ActionListener {
         public Void doInBackground() {
 
             if(verbose) System.out.println("\nBACKGROUND TASK: started");
+            startTimeMs = System.currentTimeMillis( );
+
             // initialize task progress
             setProgress(0);
             // show the progressbar, max value is set to twice the number of mp3s in the entry's directory (one for reading the tags an one for inserting into database)
@@ -519,7 +522,7 @@ public class Controller implements ActionListener {
             // get album directory of entry
             File currentMp3dir = entry.getMp3Dir();
             // create an instance of ReadDirectories to read the mp3 files in the album directory
-            ReadDirectories read = new ReadDirectories(currentMp3dir, true);
+            ReadDirectories read = new ReadDirectories(currentMp3dir, verbose);
             // read the tags of the files, pass the progressbar along to update progress
             read.getFiles( dbInfoPanel.getTheProgressbar() );
 
@@ -532,14 +535,15 @@ public class Controller implements ActionListener {
             String insertAlbum = "INSERT INTO Album (directory, subdirs, tracks, artist, title, various, albumlength, " +
                     "albumyear, genre, tag, lame, bitrate, vbr, frequency, mode) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            String insertSongs = "INSERT INTO Song (filename, subdir, track, artist, title, songlength, songyear, " +
+            String insertSongs = "INSERT INTO Song (filename, album, subdir, track, artist, title, songlength, songyear, " +
                     "genre, tag, lame, bitrate, vbr, frequency, mode) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement stmtAlbum, stmtSong;
 
             int inserted = 0;
             try {
                 Set<Album> albumSet = read.getCollection().getAlbumSet();
+                if(verbose) System.out.println("NUMBER OF ALBUMS IN SET: " + albumSet.size());
                 for(Album a : albumSet) {
                     a.fillKeys();
                     a.sortByValues();
@@ -547,7 +551,7 @@ public class Controller implements ActionListener {
 
                     stmtAlbum = model.getDAO().getConnection().prepareStatement(insertAlbum);
                     stmtAlbum.setString(1, a.getFilename().getPath() );
-                    stmtAlbum.setObject(2, a.getSubdirs() ); // does this really work??
+                    stmtAlbum.setObject(2, a.getSubdirs() ); //TODO: does this really work??
                     stmtAlbum.setInt(3, Integer.parseInt( a.getTrack() ) );
                     stmtAlbum.setString(4, a.getArtist() );
                     stmtAlbum.setString(5, a.getTitle() );
@@ -561,7 +565,6 @@ public class Controller implements ActionListener {
                     stmtAlbum.setBoolean(13, a.getVbr() );
                     stmtAlbum.setInt(14, a.getFrequency() );
                     stmtAlbum.setString(15, a.getMode() );
-
                     model.getDAO().insertValues(stmtAlbum);
 
                     if(verbose) System.out.println( a.toString() );
@@ -569,19 +572,20 @@ public class Controller implements ActionListener {
                     for(Song s : a.getSonglist() ) {
                         stmtSong = model.getDAO().getConnection().prepareStatement(insertSongs);
                         stmtSong.setString(1, s.getFilename().getPath() );
-                        stmtSong.setString(2, s.getSubdir() );
-                        stmtSong.setString(3, s.getTrack() );
-                        stmtSong.setString(4, s.getArtist() );
-                        stmtSong.setString(5, s.getTitle() );
-                        stmtSong.setLong(6, s.getLength() );
-                        stmtSong.setString(7, s.getYear() );
-                        stmtSong.setString(8, s.getGenre() );
-                        stmtSong.setString(9, s.getTag() );
-                        stmtSong.setString(10, s.getLame() );
-                        stmtSong.setInt(11, s.getBitrate() );
-                        stmtSong.setBoolean(12, s.getVbr() );
-                        stmtSong.setInt(13, s.getFrequency() );
-                        stmtSong.setString(14, s.getMode() );
+                        stmtSong.setString(2, s.getAlbum() );
+                        stmtSong.setString(3, s.getSubdir() );
+                        stmtSong.setString(4, s.getTrack() );
+                        stmtSong.setString(5, s.getArtist() );
+                        stmtSong.setString(6, s.getTitle() );
+                        stmtSong.setLong(7, s.getLength() );
+                        stmtSong.setString(8, s.getYear() );
+                        stmtSong.setString(9, s.getGenre() );
+                        stmtSong.setString(10, s.getTag() );
+                        stmtSong.setString(11, s.getLame() );
+                        stmtSong.setInt(12, s.getBitrate() );
+                        stmtSong.setBoolean(13, s.getVbr() );
+                        stmtSong.setInt(14, s.getFrequency() );
+                        stmtSong.setString(15, s.getMode() );
 
                         // insert song into database and increase number of inserted songs
                         model.getDAO().insertValues(stmtSong);
@@ -613,7 +617,9 @@ public class Controller implements ActionListener {
         public void done() {
             // update text in labels
             dbInfoPanel.setDBLabelText( String.format("%d songs in database.", nrOfSongsInDB) );
-            if(verbose) System.out.println("\nTASK DONE: nrOfSongsInDB = " + nrOfSongsInDB);
+            long taskTimeMs  = System.currentTimeMillis( ) - startTimeMs;
+            //if(verbose) 
+                System.out.println("\nTASK DONE: \nnrOfSongsInDB = " + nrOfSongsInDB + "\ntaskTime = " + taskTimeMs / 1000 + " seconds\n");
             // hide the update button
             dbInfoPanel.hideButton(dbInfoPanel.updateButton);
 

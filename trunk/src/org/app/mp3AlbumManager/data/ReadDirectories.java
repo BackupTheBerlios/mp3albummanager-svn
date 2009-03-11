@@ -21,8 +21,10 @@ import java.nio.ByteBuffer;
 
 public class ReadDirectories {
 
-    private boolean verbose = true;
+    private boolean verbose;
     private final String path;
+    private String albumArtist, albumTitle, albumYear;
+    private Boolean variousAlbum;
     private String subdir = "";
 
     private Song song;
@@ -49,6 +51,44 @@ public class ReadDirectories {
     }
 
     /**
+     * Set the album artist.
+     * @param a the album artist.
+     */
+    public void setAlbumArtist(String a) { albumArtist = a; }
+
+    /**
+     * Get the album artist.
+     * @return the album artist.
+     */
+    public String getAlbumArtist() { return albumArtist; }
+
+    /**
+     * Set the album title.
+     * @param t the album title.
+     */
+    public void setAlbumTitle(String t) { albumTitle = t; }
+
+    /**
+     * Get the album title.
+     * @return the album title.
+     */
+    public String getAlbumTitle() { return albumTitle; }
+
+    /**
+     * Set the album release year.
+     * TODO: check if parameter is a year.
+     * @param y the album release year
+     */
+    public void setAlbumYear(String y) { albumYear = y; }
+
+    /**
+     * Get the album release year.
+     * @return the album release year.
+     */
+    public String getAlbumYear() { return albumYear; }
+
+
+    /**
      * Get the subdirectory.
      * @return The subdirectory.
      */
@@ -69,6 +109,7 @@ public class ReadDirectories {
     /**
      * Traverse files in path and send to scanFile().
      * @see ReadDirectories.scanFile()
+     * @param theProgressBar the progress bar, to monitor progress.
      */
     public void getFiles(JProgressBar theProgressBar) {
 
@@ -104,12 +145,15 @@ public class ReadDirectories {
         ID3v1Tag v1tag;
         AbstractID3v2Tag v2tag = null;
         boolean foundID3v1 = false, foundID3v2 = false;
-        String track, artist, title, album, year, genre, tag, lame;
+        String track, artist, title, year, genre, tag, lame;
         String mode;
         Integer length, bitrate, frequency;
         Boolean vbr;
 
         if(verbose) System.out.println("FILE: " + file);
+
+        //----------- get the tag -----------------
+
         try {
             mp3file = new MP3File(file);
             audioHeader = mp3file.getMP3AudioHeader();
@@ -129,12 +173,13 @@ public class ReadDirectories {
                 foundID3v2 = true;
             }
 
-            if(foundID3v2) {
+            //----------- get the tag values -----------------
 
+            if(foundID3v2) {
                 track = v2tag.getFirst(ID3v24Frames.FRAME_ID_TRACK);
                 artist = v2tag.getFirst(ID3v24Frames.FRAME_ID_ARTIST);
                 title = v2tag.getFirst(ID3v24Frames.FRAME_ID_TITLE);
-                album = v2tag.getFirst(ID3v24Frames.FRAME_ID_ALBUM);
+                //album = v2tag.getFirst(ID3v24Frames.FRAME_ID_ALBUM);
                 year = v2tag.getFirst(ID3v24Frames.FRAME_ID_YEAR);
                 genre = v2tag.getFirst(ID3v24Frames.FRAME_ID_GENRE);
             } else {
@@ -145,6 +190,7 @@ public class ReadDirectories {
             length = audioHeader.getTrackLength(); //seconds
 
             // get lame frame
+            /*
             new MP3AudioHeader(file).getEncoder();  // -> NULL
 
             FileChannel fc = null;
@@ -158,8 +204,10 @@ public class ReadDirectories {
             if(verbose) System.out.println("======> LAME ID: " + id);
             bb.rewind();
             if (id.equals("LAME")) { lame = Utils.getString(bb, 0, 9, TextEncoding.CHARSET_UTF_8); }
-            else lame = "";
-            
+            else
+            */
+            lame = "";
+
 
             String bitrateAsString = "" + audioHeader.getBitRateAsNumber(); // kbps
             bitrate = Integer.parseInt(bitrateAsString);
@@ -168,13 +216,8 @@ public class ReadDirectories {
 
             mode = audioHeader.getChannels(); // Stereo, Mono, etc
 
-            // create Song instance song
-            song = new Song(file, getSubdir(), track, artist, title, length, album, year,
-                    genre, tag, lame, bitrate, vbr, frequency, mode);
+            //----------- set album dir and subdir -----------------
 
-            if(verbose) System.out.println( song.toString() );
-            nrOfMp3s++;
-            theProgressBar.setValue(nrOfMp3s);
             // get the parent dir
             File parentDir = file.getParentFile();
             // check if parent dirname is a subdir (ie dirname starts with 'cd')
@@ -192,10 +235,34 @@ public class ReadDirectories {
                 setSubdir("");
             }
 
+            //----------- get album artist, title, year -----------------
+            if(currentAlbumdir != null) {
+                String[] artistTitleYear = getDirArtistTitleYear(currentAlbumdir);
+                setAlbumArtist(artistTitleYear[0]);
+                setAlbumTitle(artistTitleYear[1]);
+                setAlbumYear(artistTitleYear[2]);
+            } else {
+                if(verbose) System.out.println("ERROR: Failed to get album artist, title, year (Album dir is null)\n");
+            }
+
+
+            //----------- create the song -----------------
+
+            // create Song instance song
+            song = new Song(file, getSubdir(), track, artist, title, length, getAlbumTitle(), year,
+                    genre, tag, lame, bitrate, vbr, frequency, mode);
+
+            if(verbose) System.out.println( song.toString() );
+            // update number of songs and set the progress
+            nrOfMp3s++;
+            theProgressBar.setValue(nrOfMp3s);
+
+            //----------- create the album -----------------
+
             // check if this is a new album or not
             if( currentAlbum == null || ! currentAlbumdir.equals(currentAlbum.getFilename() ) ) {
                 //this is a new album, create it (and set albumdir & subdir, if any)
-                Album newAlbum = new Album(currentAlbumdir);
+                Album newAlbum = new Album(currentAlbumdir, getAlbumArtist(), getAlbumTitle(), getAlbumYear(), getAlbumArtist().equals("Various Artists") );
                 newAlbum.setFilename(currentAlbumdir);
                 // add song to new album
                 newAlbum.addSong(song);
@@ -236,6 +303,73 @@ public class ReadDirectories {
         } catch (InvalidAudioFrameException e) {
             System.out.println("ERROR: InvalidAudioFrameException reading file\n\t" + file);
         }
+    }
+
+    /**
+     * Get album artist, album title and album release year from album directory name.
+     * Somewhat hard-coded for dirname: "Artist - Album (Year)"
+     * TODO: figure out if to use title, artist, year from dirname or from tag (for now I'm using dirname)
+     * @param dir the album directory.
+     * @return a string array with album artist, album title and album release year.
+     */
+    public String[] getDirArtistTitleYear(File dir) {
+
+        String dirname = dir.getName();
+        String[] ret = new String[3];
+
+        String rest, artist, title, year;
+        boolean foundArtist, foundStartYear, foundEndYear;
+        int firstpos, lastpos;
+
+        // dir has structure: Artist - Album (Year)
+        // extract these:    ^------^ ^-----^^----^
+
+        //------------- first delim (Artist) -------------
+        foundArtist = dirname.contains(" - ");
+        firstpos = dirname.indexOf('-');
+
+        if(foundArtist) {
+            artist = dirname.substring(0, firstpos - 1);
+            rest = dirname.substring(firstpos + 2);
+        } else {
+            artist = "UNKNOWN";
+            rest = dirname;
+        }
+        //------------- second delim (Album) -------------
+        foundStartYear = rest.contains("(");
+        firstpos = rest.indexOf('(');
+        lastpos = rest.lastIndexOf('(');
+
+        if(foundStartYear) {
+            if(firstpos == lastpos) {
+                title = rest.substring(0, firstpos - 1);
+                rest = rest.substring(firstpos + 1);
+            } else {
+                title = rest.substring(0, lastpos - 1);
+                rest = rest.substring(lastpos + 1);
+            }
+        } else {
+            title = rest;
+        }
+        //------------- third delim (Year) -------------
+        foundEndYear = rest.contains(")");
+        firstpos = rest.indexOf(')');
+        lastpos = rest.lastIndexOf(')');
+
+        if(foundStartYear && foundEndYear) {
+            if(firstpos == lastpos) {
+                year = rest.substring(0, firstpos);
+            } else {
+                year = rest.substring(0, lastpos);
+            }
+        } else {
+            year = "0";
+        }
+
+        // set and return array
+        ret[0] = artist; ret[1] = title; ret[2] = year;
+        if(verbose) System.out.println("\nDIRNAME: " + dirname + "\n\tARTIST: " + artist + "\n\tTITLE: " + title + "\n\tYEAR: " + year);
+        return ret;
     }
 
 }

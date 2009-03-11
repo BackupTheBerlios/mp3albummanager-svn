@@ -31,10 +31,14 @@ public class Album extends CollectionItem implements Comparator {
     private final Map<Boolean, Integer> vbrsMap;
 
     /**
-     * Create a new Album.
+     * Create a new album.
      * @param dir the album directory.
+     * @param artist the album artist.
+     * @param title the album title.
+     * @param year the album release year.
+     * @param isVarious whether a various artists album.
      */
-    public Album(File dir) {
+    public Album(File dir, String artist, String title, String year, Boolean isVarious) {
 
         setFilename(dir);
         songList = new ArrayList<Song>();
@@ -45,12 +49,12 @@ public class Album extends CollectionItem implements Comparator {
         nrOfVbrValues = 0;
 
         setTrack("0");
-        String[] artistTitleYear = getDirArtistTitleYear(dir);
-        setArtist(artistTitleYear[0]);
-        // initially set variousArtists to true if artist is equal to 'Various Artists'
-        if( getArtist().equals("Various Artists") ) { setVarious(true); }
-        setTitle(artistTitleYear[1]);
-        setYear(artistTitleYear[2]);
+
+        setArtist(artist);
+        setVarious(isVarious);
+        setTitle(title);
+        setYear(year);
+
         setLength(0);
 
         artistsMap = new HashMap<String, Integer>();
@@ -107,13 +111,7 @@ public class Album extends CollectionItem implements Comparator {
         }
     }
 
-    /**
-     * Get album artist, album title and album release year from album directory name.
-     * Hard-coded for dirname: "Artist - Album (Year)"
-     * TODO: figure out if to use title, artist, year from dirname or from tag (for now I'm using dirname)
-     * @param dir the album directory.
-     * @return album artist, album title and album release year.
-     */
+    /*
     public String[] getDirArtistTitleYear(File dir) {
 
         boolean errArtist=false, errTitle=false, errYear=false;
@@ -159,6 +157,7 @@ public class Album extends CollectionItem implements Comparator {
         ret[0] = artist; ret[1] = title; ret[2] = year;
         return ret;
     }
+    */
 
     /**
      * Get the various artist value.

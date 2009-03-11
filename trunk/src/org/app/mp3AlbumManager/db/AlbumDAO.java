@@ -388,8 +388,9 @@ public class AlbumDAO {
         String strCreateSongTable =
                 "CREATE TABLE IF NOT EXISTS Song (" +
                         "   filename    varchar(256) PRIMARY KEY, " +
+                        "   album      varchar(128), " +
                         "   subdir      varchar(128), " +
-                        "   track       VARCHAR(3), " +
+                        "   track       VARCHAR(8), " +
                         "   artist      VARCHAR(64), " +
                         "   title       VARCHAR(128), " +
                         "   songlength  INTEGER, " +
@@ -417,10 +418,8 @@ public class AlbumDAO {
 
     public ResultSet executePreparedStmt(PreparedStatement prepStmt) {
         try {
-            ResultSet result = prepStmt.executeQuery();
-            return result;
-
-        } catch(SQLException e) {
+            return prepStmt.executeQuery();
+         } catch(SQLException e) {
             System.err.println("ERROR: SQLException when executing statement:\n\t" + prepStmt.toString() );
             return null;
         }
@@ -431,9 +430,12 @@ public class AlbumDAO {
      * @param prepStmt the PreparedStatement.
      */
     public void insertValues(PreparedStatement prepStmt) {
+        
         try {
-            prepStmt.executeUpdate();
-            prepStmt.close();
+            if( prepStmt.executeUpdate() == 0) {
+                if(verbose) System.err.println("INSERT FAILED:\n");
+            }
+            //prepStmt.close();
 
         } catch(SQLException se) {
             se.printStackTrace();
