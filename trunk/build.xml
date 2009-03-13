@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Ant-Test" default="build" basedir=".">
+<project name="mp3albummanager" default="build" basedir=".">
 	<!-- Sets variables which can later be used. -->
 
+    <!-- main class -->
+    <property name="main.class" value="org.app.mp3AlbumManager.main.StartApp" />
+
+    <!-- directories -->
 	<property name="src" location="src" />
     <property name="config" location="src/config" />
     <property name="res" location="res" />
@@ -13,7 +17,11 @@
 
 
     <!-- Define the classpath which includes the required library jars and the configuration file-->
-	<path id="h2.class.path">
+    <path id="dist.classpath">
+        <fileset dir="${lib}" includes="**/*.jar, **/*.zip" />
+    </path>
+
+<path id="h2.class.path">
 		<pathelement location="lib/h2-1.1.108.jar" />
 	</path>
     <path id="jaudiotagger.class.path">
@@ -31,6 +39,12 @@
     <path id="build.class.path">
 		<pathelement location="${build}" />
 	</path>
+
+
+    <manifestclasspath property="manifest.classpath" jarfile="${dist}/${ant.project.name}.jar">
+        <classpath refid="dist.classpath" />
+    </manifestclasspath>
+
 
 	<!-- Deletes the existing build, dist and javadoc directory-->
 	<target name="clean">
@@ -76,31 +90,21 @@
 
 	<!--Creates the deployable jar file  -->
 	<target name="jar" depends="compile">
-		<jar destfile="${dist}\mp3albummanager.jar" basedir="${build}">
-			<manifest>
-				<attribute name="Main-Class" value="org.app.mp3AlbumManager.main.StartApp" />
-			</manifest>
-		</jar>
+        <jar destfile="${dist}/${ant.project.name}.jar" compress="true">
+            <fileset dir="${build}" includes="**/*.*" />
+            <manifest>
+                <attribute name="Main-Class" value="${main.class}" />
+                <attribute name="Class-Path" value="${manifest.classpath}"/>
+            </manifest>
+        </jar>
 	</target>
+
+
 
 
 	<target name="build" depends="compile, jar">
 		<description>Default target</description>
-        <pathconvert pathsep="${line.separator}" property="echo.classpath" refid="h2.class.path" />
-        <echo message="The following classpath is associated with h2.class.path " />
-        <echo message="${echo.classpath}" />
 
-        <pathconvert pathsep="${line.separator}" property="echo.classpath" refid="jaudiotagger.class.path" />
-        <echo message="The following classpath is associated with jaudiotagger.class.path " />
-        <echo message="${echo.classpath}" />
-
-        <pathconvert pathsep="${line.separator}" property="echo.classpath" refid="tablelayout.class.path" />
-        <echo message="The following classpath is associated with tablelayout.class.path " />
-        <echo message="${echo.classpath}" />
-
-        <pathconvert pathsep="${line.separator}" property="echo.classpath" refid="swinglayout.class.path" />
-        <echo message="The following classpath is associated with swinglayout.class.path " />
-        <echo message="${echo.classpath}" />
 	</target>
 
 </project>

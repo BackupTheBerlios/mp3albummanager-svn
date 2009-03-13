@@ -1,6 +1,8 @@
 package org.app.mp3AlbumManager.data;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
 
 public abstract class CollectionItem {
 
@@ -107,10 +109,17 @@ public abstract class CollectionItem {
 
     /**
      * Set the track number.
-     * TODO: check if parameter is a number.
+     * Output warning if not a valid number.
      * @param t the track number.
      */
-    public void setTrack(String t) { track = t; }
+    public void setTrack(String t) {
+        try {
+            Integer.parseInt(t);
+        } catch (NumberFormatException nfe) {
+            System.err.println("WARNING: Not a valid track number: " + t);
+        }
+        track = t;
+    }
 
     /**
      * Set the artist.
@@ -126,10 +135,33 @@ public abstract class CollectionItem {
 
     /**
      * Set the release year.
-     * TODO: check if parameter is a year.
+     * Output warning if not a valid year.
      * @param y the release year
      */
-    public void setYear(String y) { year = y; }
+    public void setYear(String y) {
+
+        if( ! checkYearInput(y) ) { System.err.println("WARNING: Not a valid year: " + y); }
+        year = y;
+    }
+
+    /**
+     * Checks whether input string is a valid year.
+     * @param y the input string.
+     * @return whether input string is a valid year.
+     */
+    private boolean checkYearInput(String y) {
+
+        if (y == null) return false;
+        
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+        if (y.trim().length() != yearFormat.toPattern().length()) return false;
+        try {
+            yearFormat.parse( y.trim() );
+        } catch (ParseException e) {
+            return false;
+        }
+        return true;
+    }
 
     /**
      * Set the length in seconds.

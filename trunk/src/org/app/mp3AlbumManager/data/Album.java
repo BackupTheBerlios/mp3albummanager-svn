@@ -28,7 +28,7 @@ public class Album extends CollectionItem implements Comparator {
     private final Map<Integer, Integer> freqsMap;
     private final Map<Integer, Integer> constantBitratesMap;
     private final Map<String, Integer> modesMap;
-    private final Map<Boolean, Integer> vbrsMap;
+    private final Map<Integer, Integer> vbrsMap;
 
     /**
      * Create a new album.
@@ -65,7 +65,7 @@ public class Album extends CollectionItem implements Comparator {
         lameMap = new HashMap<String, Integer>();
         //encoderMap = new HashMap<String, Integer>();
         constantBitratesMap = new HashMap<Integer, Integer>();
-        vbrsMap = new HashMap<Boolean, Integer>();
+        vbrsMap = new HashMap<Integer, Integer>();
         freqsMap = new HashMap<Integer, Integer>();
         modesMap = new HashMap<String, Integer>();
     }
@@ -232,8 +232,9 @@ public class Album extends CollectionItem implements Comparator {
             addToModesMap( song.getMode() );
             addToLameMap( song.getLame() );
             addToFreqsMap( song.getFrequency() );
-            addToVbrsMap( song.getVbr() );
+
             if( song.getVbr() ) {
+                addToVbrsMap( song.getBitrate() );
                 nrOfVbrValues++;
                 sumOfVbrValues += song.getBitrate();
             } else {
@@ -515,13 +516,13 @@ public class Album extends CollectionItem implements Comparator {
      * Get the vbr values map.
      * @return vbr values map.
      */
-    public Map<Boolean, Integer> getVbrsMap() { return vbrsMap; }
+    public Map<Integer, Integer> getVbrsMap() { return vbrsMap; }
 
     /**
      * Add a vbr value to the vbr values map.
      * @param vbr the vbr value.
      */
-    public void addToVbrsMap(Boolean vbr) {
+    public void addToVbrsMap(Integer vbr) {
         if( vbrsMap.containsKey(vbr) ) {
             vbrsMap.put( vbr, vbrsMap.get(vbr) + 1 );
         } else {

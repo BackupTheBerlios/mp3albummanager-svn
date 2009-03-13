@@ -53,6 +53,9 @@ public class CreateDBPanel extends JPanel {
 
         //======== this ========
         setBackground(bgcolor);
+        setPreferredSize( new Dimension(375, 260) );
+        setMinimumSize( new Dimension(375, 260) );
+        setMaximumSize( new Dimension(375, 260) );
 
         //---- headerLabel ----
         headerLabel.setFont(new Font("DejaVu Sans", Font.BOLD, 14));
@@ -75,6 +78,82 @@ public class CreateDBPanel extends JPanel {
         dbDirField.setEditable(false);
 
         //LAYOUT
+        /*
+        setLayout(new GridBagLayout());
+        ((GridBagLayout)getLayout()).columnWidths = new int[] {58, 199, 0, 0};
+        ((GridBagLayout)getLayout()).rowHeights = new int[] {31, 29, 28, 29, 29, 29, 24, 0};
+        ((GridBagLayout)getLayout()).columnWeights = new double[] {1.0, 0.0, 0.0, 1.0E-4};
+        ((GridBagLayout)getLayout()).rowWeights = new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0E-4};
+
+        //---- headerLabel ----
+        headerLabel.setText("NEW DATABASE");
+        headerLabel.setFont(new Font("Dialog", Font.BOLD, 14));
+        add(headerLabel, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0));
+
+        //---- databaseLabel ----
+        databaseLabel.setText("Database");
+        databaseLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        add(databaseLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 5), 0, 0));
+        add(databaseField, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0));
+
+        //---- userLabel ----
+        userLabel.setText("Username");
+        userLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        add(userLabel, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 5), 0, 0));
+        add(userField, new GridBagConstraints(1, 2, 2, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0));
+
+        //---- passLabel ----
+        passLabel.setText("Password");
+        passLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        add(passLabel, new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 5), 0, 0));
+        add(passField, new GridBagConstraints(1, 3, 2, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0));
+
+        //---- browseMP3Bbutton ----
+        browseMP3Button.setText("Browse...");
+        add(browseMP3Button, new GridBagConstraints(0, 4, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 5), 0, 0));
+        add(mp3DirField, new GridBagConstraints(1, 4, 2, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0));
+
+        //---- browseDBBbutton ----
+        browseDBButton.setText("Browse...");
+        add(browseDBButton, new GridBagConstraints(0, 5, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 5), 0, 0));
+        add(dbDirField, new GridBagConstraints(1, 5, 2, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0));
+
+        //---- createButton ----
+        createButton.setText("CREATE");
+        add(createButton, new GridBagConstraints(2, 6, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 0, 0), 0, 0));
+
+        //---- messageLabel ----
+        messageLabel.setText("messageLabel");
+        messageLabel.setForeground(Color.red);
+
+       //---- messageLabel ----
+       add(messageLabel);
+        */
+
         GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
         layout.setHorizontalGroup(
@@ -139,6 +218,7 @@ public class CreateDBPanel extends JPanel {
                     .add(messageLabel)
             )
         );
+
     }
 
     public void showPanel() {

@@ -21,7 +21,7 @@ public class Model {
      */
     private static final String HTML_TEMPLATE = "/config/template.html";
     /**
-     * The list of the genre names.
+     * The list of the genre names (149 genres).
      */
     private final String[] genres = { "Blues", "Classic Rock", "Country", "Dance", "Disco", "Funk", "Grunge", "Hip-Hop", "Jazz",
             "Metal", "New Age", "Oldies", "Other", "Pop", "R&B", "Rap", "Reggae", "Rock", "Techno", "Industrial",
@@ -305,6 +305,28 @@ public class Model {
         secs = remdr;
         // only return hours if hours > 0
         return (hours > 0) ? String.format("%1$02d:%2$02d:%3$02d", hours, mins, secs) : String.format("%1$02d:%2$02d", mins, secs);
+    }
+
+    /**
+     * Get the genre name from a genre number.
+     * Return the genre number if it fails.
+     * @param genrenr the genre number.
+     * @return the genre name.
+     */
+    public String getGenreName(String genrenr) {
+
+        try {
+            int nr = Integer.parseInt(genrenr);
+            if(nr < 0 || nr > 149) {
+                if(verbose) System.out.println("\nFailed to parse genre as a number: " + genrenr);
+                return genrenr;
+            } else {
+                return genres[nr];
+            }
+        } catch (NumberFormatException nfe) {
+            if(verbose) System.out.println("\nFailed to parse genre as a number: " + genrenr);
+            return genrenr;
+        }
     }
 
     //############ TemplateWriter methods #################

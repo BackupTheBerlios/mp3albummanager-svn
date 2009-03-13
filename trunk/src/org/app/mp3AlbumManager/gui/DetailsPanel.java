@@ -92,6 +92,9 @@ public class DetailsPanel extends JPanel implements ItemListener {
         cancelButton = new JButton();
         updateButton = new JButton();
 
+
+
+        //TableLayout
         setLayout(
             new TableLayout(
                 new double[][] {
@@ -270,15 +273,17 @@ public class DetailsPanel extends JPanel implements ItemListener {
         variousButtonGroup.add(isVariousRadioButton);
         variousButtonGroup.add(isNotVariousRadioButton);
 
+        //TODO: set listeners for edit buttons (cancel, update)
         //---- cancelButton ----
         cancelButton.setText("CANCEL");
-        cancelButton.setVisible(false);
         add(cancelButton, new TableLayoutConstraints(3, 16, 3, 16, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
         //---- updateButton ----
         updateButton.setText("UPDATE");
-        updateButton.setVisible(false);
         add(updateButton, new TableLayoutConstraints(4, 16, 4, 16, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
 
+        // initially hide the edit buttons and the comboboxes
+        showEditButtons(false);
+        showComboBoxes(false);
     }
 
     // GETTERS
@@ -344,7 +349,6 @@ public class DetailsPanel extends JPanel implements ItemListener {
 
     public void setModeTextField(String text) { modeTextField.setText(text); }
 
-
     public void setVbr() { isVbrRadioButton.setSelected(true); }
 
     public void setNotVbr() { isNotVbrRadioButton.setSelected(true); }
@@ -353,6 +357,44 @@ public class DetailsPanel extends JPanel implements ItemListener {
 
     public void setNotVarious() { isNotVariousRadioButton.setSelected(true); }
 
+    public void addToYearComboBox(String s) { yearComboBox.addItem(s); }
+
+    public void addToGenreComboBox(String s) { genreComboBox.addItem(s); }
+
+    public void addToTagComboBox(String s) { tagComboBox.addItem(s); }
+
+    public void addToLameComboBox(String s) { lameComboBox.addItem(s); }
+
+    public void addToBitrateComboBox(String s) { bitrateComboBox.addItem(s); }
+
+    public void addToFrequencyComboBox(String s) { frequencyComboBox.addItem(s); }
+
+    public void addToModeComboBox(String s) { modeComboBox.addItem(s); }
+
+    public void resetAllFields() {
+        trackTextField.setText("");
+        artistTextField.setText("");
+        titleTextField.setText("");
+        subdirTextField.setText("");
+        lengthTextField.setText("");
+        yearTextField.setText("");
+        genreTextField.setText("");
+        tagTextField.setText("");
+        lameTextField.setText("");
+        bitrateTextField.setText("");
+        frequencyTextField.setText("");
+        modeTextField.setText("");
+        setNotVarious();
+        setNotVbr();
+        yearComboBox.removeAllItems();
+        genreComboBox.removeAllItems();
+        tagComboBox.removeAllItems();
+        lameComboBox.removeAllItems();
+        bitrateComboBox.removeAllItems();
+        frequencyComboBox.removeAllItems();
+        modeComboBox.removeAllItems();
+    }
+
     // set fields in array to editable
     public void setEditableFields(boolean value) {
         for(JTextField f : editableFields) {
@@ -360,9 +402,19 @@ public class DetailsPanel extends JPanel implements ItemListener {
         }
     }
 
-    public void setVisibleButtons(boolean value) {
+    public void showEditButtons(boolean value) {
         cancelButton.setVisible(value);
         updateButton.setVisible(value);
+    }
+
+    public void showComboBoxes(boolean value) {
+        yearComboBox.setVisible(value);
+        genreComboBox.setVisible(value);
+        tagComboBox.setVisible(value);
+        lameComboBox.setVisible(value);
+        bitrateComboBox.setVisible(value);
+        frequencyComboBox.setVisible(value);
+        modeComboBox.setVisible(value);
     }
 
     // LISTENER for comboboxes
@@ -379,7 +431,17 @@ public class DetailsPanel extends JPanel implements ItemListener {
         } else if( source == lameComboBox ) {
             lameTextField.setText( getLameComboBox() );
         } else if( source == bitrateComboBox ) {
-            bitrateTextField.setText( getBitrateComboBox() );
+            String comboValue = getBitrateComboBox();
+            if(comboValue == null) return;
+            // set both vbr & bitrate
+            if(comboValue.startsWith("~")) {
+                bitrateTextField.setText( comboValue.substring(1) ); // omit the ~
+                setVbr();
+            } else {
+                setNotVbr();
+                bitrateTextField.setText( comboValue );
+            }
+
         } else if( source == frequencyComboBox ) {
             frequencyTextField.setText( getFrequencyComboBox() );
         } else if( source == modeComboBox ) {

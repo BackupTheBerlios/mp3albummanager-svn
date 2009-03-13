@@ -15,6 +15,9 @@ import java.awt.event.ActionListener;
  */
 public class View extends JFrame {
 
+    private static final int APP_WIDTH = 1000,
+                             APP_HEIGHT = 500;
+
     private JMenuItem menuItemQuit;
     JMenuItem menuItemNew;
     private JMenuItem menuItemOpen;
@@ -250,7 +253,7 @@ public class View extends JFrame {
         }
         contentPane.add(toolBar, BorderLayout.NORTH);
 
-        setSize(825, 500); // 640, 800
+        setSize(APP_WIDTH, APP_HEIGHT); // 640, 800
         setLocationRelativeTo(getOwner());
         setVisible(true);
     }

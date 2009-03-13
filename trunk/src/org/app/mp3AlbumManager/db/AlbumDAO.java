@@ -370,7 +370,7 @@ public class AlbumDAO {
         String strCreateAlbumTable =
                 "CREATE TABLE IF NOT EXISTS Album (" +
                         "   directory   VARCHAR(256) PRIMARY KEY," +
-                        "   subdirs     ARRAY, " +
+                        "   subdirs     VARCHAR(256), " +
                         "   tracks      INTEGER, " +
                         "   artist      VARCHAR(64), " +
                         "   title       VARCHAR(128), " +

@@ -214,7 +214,7 @@ public class ReadDirectories {
             vbr = audioHeader.isVariableBitRate();
             frequency = audioHeader.getSampleRateAsNumber(); // Hz
 
-            mode = audioHeader.getChannels(); // Stereo, Mono, etc
+            mode = audioHeader.getChannels(); // Stereo, Joint Stereo, Dual or Mono
 
             //----------- set album dir and subdir -----------------
 
