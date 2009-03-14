@@ -1,7 +1,3 @@
-/*
- * Created by JFormDesigner on Tue Feb 24 14:59:19 CET 2009
- */
-
 package org.app.mp3AlbumManager.gui;
 
 import org.app.mp3AlbumManager.util.ImageLoader;
@@ -10,13 +6,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
-/**
- * The main view of the GUI.
- */
 public class View extends JFrame {
 
-    private static final int APP_WIDTH = 1000,
-                             APP_HEIGHT = 500;
+    private static final int APP_WIDTH = 1010,
+                             APP_HEIGHT = 510;
 
     private JMenuItem menuItemQuit;
     JMenuItem menuItemNew;

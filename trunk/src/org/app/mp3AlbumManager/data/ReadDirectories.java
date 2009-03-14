@@ -76,7 +76,6 @@ public class ReadDirectories {
 
     /**
      * Set the album release year.
-     * TODO: check if parameter is a year.
      * @param y the album release year
      */
     public void setAlbumYear(String y) { albumYear = y; }

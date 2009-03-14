@@ -1,34 +1,39 @@
 package org.app.mp3AlbumManager.gui;
 
-import org.jdesktop.layout.GroupLayout;
-import org.jdesktop.layout.LayoutStyle;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
+import com.jeta.forms.components.panel.FormPanel;
+
 public class InfoDBPanel extends JPanel {
 
-    JButton updateButton;
-    private JButton nextButton;
-    private JLabel dbLabel;
-    private JLabel albumLabel;
-    private final String dbLabelText;
-    private final String albumLabelText;
-    private Color bgcolor;
+    public static final String ID_MUSICLABEL = "musicLabel";  //com.jeta.forms.components.label.JETALabel
+    public static final String ID_DBLABEL = "dbLabel";  //com.jeta.forms.components.label.JETALabel
+    public static final String ID_NEXTBUTTON = "nextButton";  //javax.swing.JButton
+    public static final String ID_UPDATEBUTTON = "updateButton";  //javax.swing.JButton
+    public static final String ID_PROGRESSBAR = "progressbar";  //javax.swing.JProgressBar
 
+    // the form panel
+    private FormPanel infoPanel;
+
+    // panel components
+    private JLabel musicLabel;
+    private JLabel dbLabel;
+    AbstractButton nextButton;
+    AbstractButton updateButton;
     public JProgressBar progressBar;
 
-    /**
-     * Create a info panel.
-     * @param dbLabelText the text of the dbLabel (number of songs in the database).
-     * @param albumLabelText the text of the albumLabel (number of songs in the album directory).
-     * @param color the background color.
-     */
-    public InfoDBPanel(String dbLabelText, String albumLabelText, Color color) {
+    private final String dbLabelText;
+    private final String musicLabelText;
+    private Color bgcolor;
+
+    public InfoDBPanel(String dbLabelText, String musicLabelText, Color color) {
+
+        infoPanel = new FormPanel("org/app/mp3AlbumManager/forms/infoPanel.jfrm");
 
         this.dbLabelText = dbLabelText;
-        this.albumLabelText = albumLabelText;
+        this.musicLabelText = musicLabelText;
 
         bgcolor = color;
 
@@ -40,80 +45,30 @@ public class InfoDBPanel extends JPanel {
      */
     private void initComponents() {
 
-        JLabel headerLabel = new JLabel("DATABASE INFO");
-
-        dbLabel = new JLabel();
-        albumLabel = new JLabel();
-
-        updateButton = new JButton("UPDATE");
-        nextButton = new JButton("NEXT");
-
-        progressBar = new JProgressBar();
-        //progressBar.setValue(0);
-        progressBar.setStringPainted(true);
-        //progressBar.setIndeterminate(true);
-        progressBar.setVisible(false);
-
+        dbLabel = infoPanel.getLabel(ID_DBLABEL);
+        musicLabel = infoPanel.getLabel(ID_MUSICLABEL);
+        updateButton = infoPanel.getButton(ID_UPDATEBUTTON);
+        nextButton = infoPanel.getButton(ID_NEXTBUTTON);
+        progressBar = infoPanel.getProgressBar(ID_PROGRESSBAR);
 
         //======== this ========
         setBackground(bgcolor);
 
-        //---- headerLabel ----
-        headerLabel.setFont(new Font("DejaVu Sans", Font.BOLD, 14));
-
         //---- dbLabel ----
         dbLabel.setText(dbLabelText);
 
-        //---- albumLabel ----
-        albumLabel.setText(albumLabelText);
+        //---- musicLabel ----
+        musicLabel.setText(musicLabelText);
 
         //---- updateButton ----
         updateButton.setVisible(false);
 
+        //---- progressBar ----
+        progressBar.setVisible(false);
 
         //LAYOUT
-        GroupLayout layout = new GroupLayout(this);
-        // provide space for invisible synch button
-        layout.setHonorsVisibility(updateButton, false);
-
-        setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup()
-                .add(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(layout.createParallelGroup()
-                        .add(headerLabel)
-                        .add(dbLabel)
-                        .add(layout.createParallelGroup(GroupLayout.TRAILING)
-                            .add(layout.createSequentialGroup()
-                                .add(updateButton)
-                                .addPreferredGap(LayoutStyle.RELATED)
-                                .add(nextButton))
-                            .add(albumLabel)
-                        )
-                    )
-                    .addContainerGap(208, Short.MAX_VALUE)
-            )
-            .add(progressBar)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup()
-                .add(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(headerLabel)
-                    .addPreferredGap(LayoutStyle.RELATED)
-                    .add(dbLabel)
-                    .addPreferredGap(LayoutStyle.RELATED)
-                    .add(albumLabel)
-                    .addPreferredGap(LayoutStyle.RELATED)
-                    .add(layout.createParallelGroup(GroupLayout.BASELINE)
-                        .add(nextButton)
-                        .add(updateButton))
-                    .addContainerGap(204, Short.MAX_VALUE)
-                    .add(progressBar)
-                )
-
-        );
+        setLayout( new BorderLayout() );
+        add( infoPanel, BorderLayout.CENTER );
     }
 
     /**
@@ -128,6 +83,12 @@ public class InfoDBPanel extends JPanel {
     }
 
     /**
+     * Get the form panel.
+     * @return the form panel.
+     */
+    public FormPanel getForm() { return infoPanel; }
+
+    /**
      * Make the panel visible.
      */
     public void showPanel() {
@@ -136,19 +97,21 @@ public class InfoDBPanel extends JPanel {
     }
 
     /**
-     * Hide a button in the panel.
-     * @param button the button to hide.
+     * Show or hide a button in the panel.
+     * @param button the button to show.
+     * @param value whether enabled or disabled.
      */
-    public void hideButton(JButton button) {
-        button.setVisible(false);
+    public void showButton(AbstractButton button, boolean value) {
+        button.setVisible(value);
     }
 
     /**
-     * Show a button in the panel.
-     * @param button the button to show.
+     * Enable or disable a button in the panel.
+     * @param button the button to hide.
+     * @param value whether enabled or disabled.
      */
-    public void showButton(JButton button) {
-        button.setVisible(true);
+    public void enableButton(AbstractButton button, boolean value) {
+        button.setEnabled(value);
     }
 
     /**
@@ -170,6 +133,10 @@ public class InfoDBPanel extends JPanel {
         revalidate();
     }
 
+    /**
+     * Get the progress bar.
+     * @return the progress bar.
+     */
     public JProgressBar getTheProgressbar() { return progressBar; }
     
 }

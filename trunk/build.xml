@@ -1,79 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="mp3albummanager" default="build" basedir=".">
-	<!-- Sets variables which can later be used. -->
+
+	<!-- location for the external libraries -->
+    <property name="lib.dir" location="lib" />
+
 
     <!-- main class -->
     <property name="main.class" value="org.app.mp3AlbumManager.main.StartApp" />
 
     <!-- directories -->
-	<property name="src" location="src" />
-    <property name="config" location="src/config" />
-    <property name="res" location="res" />
-    <property name="lib" location="lib" />
-	<property name="build" location="classes" />
-	<property name="dist" location="dist" />
-	<property name="doc" location="doc" />
-    <property name="javadoc" location="doc/javadoc" />
-
+	<property name="src.dir" location="src" />
+    <property name="config.dir" location="src/config" />
+    <property name="res.dir" location="res" />
+	<property name="build.dir" location="classes" />
+	<property name="dist.dir" location="dist" />
+	<property name="doc.dir" location="doc" />
+    <property name="javadoc.dir" location="doc/javadoc" />
 
     <!-- Define the classpath which includes the required library jars and the configuration file-->
     <path id="dist.classpath">
-        <fileset dir="${lib}" includes="**/*.jar, **/*.zip" />
+        <fileset dir="${lib.dir}" includes="**/*.jar, **/*.zip" />
     </path>
 
-<path id="h2.class.path">
-		<pathelement location="lib/h2-1.1.108.jar" />
+    <path id="h2.class.path">
+		<pathelement location="${lib.dir}/h2-1.1.108.jar" />
 	</path>
     <path id="jaudiotagger.class.path">
-		<pathelement location="lib/jaudiotagger.jar" />
+		<pathelement location="${lib.dir}/jaudiotagger.jar" />
 	</path>
     <path id="tablelayout.class.path">
-		<pathelement location="lib/TableLayout.jar" />
+		<pathelement location="${lib.dir}/TableLayout.jar" />
 	</path>
-    <path id="swinglayout.class.path">
-		<pathelement location="lib/swing-layout.jar" />
+    <path id="abeille.class.path">
+		<pathelement location="${lib.dir}/formsrt.jar" />
 	</path>
     <path id="configuration.class.path">
-		<pathelement location="res/config" />
+		<pathelement location="${res.dir}/config" />
 	</path>
     <path id="build.class.path">
-		<pathelement location="${build}" />
+		<pathelement location="${build.dir}" />
 	</path>
 
 
-    <manifestclasspath property="manifest.classpath" jarfile="${dist}/${ant.project.name}.jar">
+    <manifestclasspath property="manifest.classpath" jarfile="${dist.dir}/${ant.project.name}.jar">
         <classpath refid="dist.classpath" />
     </manifestclasspath>
 
 
 	<!-- Deletes the existing build, dist and javadoc directory-->
 	<target name="clean">
-		<delete dir="${build}" />
-		<delete dir="${dist}" />
-        <delete dir="${javadoc}" />
+		<delete dir="${build.dir}" />
+		<delete dir="${dist.dir}" />
+        <delete dir="${javadoc.dir}" />
 	</target>
 
 	<!-- Creates the  build, dist and javadoc directory-->
 	<target name="makedir">
-		<mkdir dir="${build}" />
-		<mkdir dir="${dist}" />
-        <mkdir dir="${javadoc}" />
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${dist.dir}" />
+        <mkdir dir="${javadoc.dir}" />
 	</target>
 
     <!-- Compiles the java code and includes library jars -->
 	<target name="compile" depends="clean, makedir">
-        <copy todir="${build}/res">
-            <fileset dir="${res}" />
+        <copy todir="${build.dir}/res">
+            <fileset dir="${res.dir}" />
         </copy>
-        <copy todir="${build}/config">
-            <fileset dir="${config}" />
+        <copy todir="${build.dir}/config">
+            <fileset dir="${config.dir}" />
         </copy>
-
-		<javac srcdir="${src}" destdir="${build}">
+		<javac srcdir="${src.dir}" destdir="${build.dir}">
             <classpath refid="h2.class.path" />
             <classpath refid="jaudiotagger.class.path" />
             <classpath refid="tablelayout.class.path" />
-            <classpath refid="swinglayout.class.path" />
+            <classpath refid="abeille.class.path" />
             <classpath refid="configuration.class.path" />
             <classpath refid="build.class.path" />
         </javac>
@@ -81,7 +81,7 @@
 
 	<!-- Creates Javadoc -->
 	<target name="javadoc" depends="compile">
-		<javadoc packagenames="src" sourcepath="${src}" destdir="${javadoc}">
+		<javadoc packagenames="src" sourcepath="${src.dir}" destdir="${javadoc.dir}">
 			<fileset dir="src">
 				<include name="**/*.java" />
 			</fileset>
@@ -90,8 +90,9 @@
 
 	<!--Creates the deployable jar file  -->
 	<target name="jar" depends="compile">
-        <jar destfile="${dist}/${ant.project.name}.jar" compress="true">
-            <fileset dir="${build}" includes="**/*.*" />
+        <jar destfile="${dist.dir}/${ant.project.name}.jar" compress="true">
+            <fileset dir="${build.dir}" includes="**/*.*" />
+            <!-- <zipfileset dir="${lib.dir}" includes="**/*.jar" /> -->
             <manifest>
                 <attribute name="Main-Class" value="${main.class}" />
                 <attribute name="Class-Path" value="${manifest.classpath}"/>

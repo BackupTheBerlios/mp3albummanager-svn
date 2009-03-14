@@ -21,6 +21,8 @@ import java.util.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 
+import com.jeta.forms.components.panel.FormPanel;
+
 public class Controller implements ActionListener {
     /**
      * Constant for the All Albums item in the albums list.
@@ -34,7 +36,7 @@ public class Controller implements ActionListener {
     private StartupPanel startupPanel;
     private OpenDBPanel openPanel;
     private CreateDBPanel createPanel;
-    private InfoDBPanel dbInfoPanel;
+    private InfoDBPanel infoPanel;
     private ListPanel listPanel;
     private DetailsPanel detailsPanel;
 
@@ -95,7 +97,7 @@ public class Controller implements ActionListener {
                 // remove other panels
                 if(showingOpen) { view.remove(openPanel); showingOpen = false; }
                 if(showingNew) { view.remove(createPanel); showingNew = false; }
-                if(showingInfo) { view.remove(dbInfoPanel); showingInfo = false; }
+                if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
                 if(showingList) { view.remove(listPanel); showingList = false; }
                 if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
 
@@ -119,7 +121,7 @@ public class Controller implements ActionListener {
                 // remove other panels
                 if(showingClose) { view.remove(startupPanel); showingClose = false; }
                 if(showingOpen) { view.remove(openPanel); showingOpen = false; }
-                if(showingInfo) { view.remove(dbInfoPanel); showingInfo = false; }
+                if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
                 if(showingList) { view.remove(listPanel); showingList = false; }
 
                 // setup menu items (same as startup + DISABLE new + ENABLE close)
@@ -143,7 +145,7 @@ public class Controller implements ActionListener {
                 // remove other panels
                 if(showingClose) { view.remove(startupPanel); showingClose = false; }
                 if(showingNew) { view.remove(createPanel); showingNew = false; }
-                if(showingInfo) { view.remove(dbInfoPanel); showingInfo = false; }
+                if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
                 if(showingList) { view.remove(listPanel); showingList = false; }
 
                 // setup menu items (same as startup + DISABLE new + ENABLE close
@@ -165,7 +167,7 @@ public class Controller implements ActionListener {
                 String mp3Dir = model.getCurrentEntry().getMp3Dirname();
                 // fill dbDirField & mp3DirField with values
                 openPanel.setDBDirField(dbDir);
-                openPanel.setMp3DirField(mp3Dir);
+                openPanel.setMusicField(mp3Dir);
 
                 openPanel.showPanel();
                 view.addPanel(openPanel);
@@ -230,7 +232,6 @@ public class Controller implements ActionListener {
 
         } else if( actionCommand.equals("edit") ) {
 
-            //TODO: implement actions for Edit
             // make fields editable and show buttons
             detailsPanel.setEditableFields(true);
             detailsPanel.showEditButtons(true);
@@ -271,7 +272,7 @@ public class Controller implements ActionListener {
                 if( openPanel.getSelectedDatabase() == null) { openPanel.setMessageLabel("Please select database"); proceed = false; }
                 // get field values for directory, username & password
                 // check if any field is empty
-                String mp3Dir = openPanel.getMp3DirField();
+                String mp3Dir = openPanel.getMusicField();
                 String dbDir = openPanel.getDBDirField();
                 if( mp3Dir.isEmpty() || dbDir.isEmpty() ) { openPanel.setMessageLabel("Please select database"); proceed = false; }
                 String user = openPanel.getUserField();
@@ -297,13 +298,13 @@ public class Controller implements ActionListener {
                 // get field values for name, directory, username & password
                 // check if any field is empty
                 //TODO: check that dbname is unique, ie not found in earlier db entries
-                String dbName = createPanel.getDatabaseField();
+                String dbName = createPanel.getCollectionField();
                 if( dbName.isEmpty() ) { createPanel.setMessageLabel("Please fill in a database name"); return; }
                 String user = createPanel.getUserField();
                 if( user.isEmpty() ) { createPanel.setMessageLabel("Please fill in a username"); return; }
                 String pass = createPanel.getPassField();
                 if( pass.isEmpty() ) { createPanel.setMessageLabel("Please fill in a password"); return; }
-                String mp3Dir = createPanel.getMp3DirField();
+                String mp3Dir = createPanel.getMusicField();
                 if( mp3Dir.isEmpty() || ! mp3Dir.startsWith("/")) { createPanel.setMessageLabel("Please set albums directory"); return; }
                 String dbDir = createPanel.getDBDirField();
                 if( dbDir.isEmpty() || ! dbDir.startsWith("/")) { createPanel.setMessageLabel("Please set database directory"); return; }
@@ -331,7 +332,7 @@ public class Controller implements ActionListener {
             } else if( actionCommand.equals("browseMP3dir") ) {
 
                 FileBrowser browse = new FileBrowser(JFileChooser.OPEN_DIALOG, JFileChooser.DIRECTORIES_ONLY);
-                createPanel.setMp3DirField( browse.getTarget() );
+                createPanel.setMusicField( browse.getTarget() );
 
             } else if( actionCommand.equals("browseDBdir") ) {
 
@@ -355,7 +356,7 @@ public class Controller implements ActionListener {
             String mp3Dir = model.getCurrentEntry().getMp3Dirname();
             // fill dbDirField & mp3DirField with values
             openPanel.setDBDirField(dbDir);
-            openPanel.setMp3DirField(mp3Dir);
+            openPanel.setMusicField(mp3Dir);
 
         }
 
@@ -406,23 +407,26 @@ public class Controller implements ActionListener {
             String firstLabel = String.format("%d songs in database.", nrOfSongsInDB);
             String secondLabel = String.format("%d songs found in album directory.", model.getNrOfMp3s() );
 
-            dbInfoPanel = new InfoDBPanel(firstLabel, secondLabel, bgcolor);
-            dbInfoPanel.infoDBListener( new InfoPanelListener() );
+            infoPanel = new InfoDBPanel(firstLabel, secondLabel, bgcolor);
+            infoPanel.infoDBListener( new InfoPanelListener() );
 
             //TODO: update db option should be more sophisticated...
             //      db entry exists though file has been deleted -> deleted
             //      file exists but not found in db -> new
 
             // show update button if nr of mp3s != nr of records
-            if( model.getNrOfMp3s() != nrOfSongsInDB) { dbInfoPanel.showButton(dbInfoPanel.updateButton); }
+            if( model.getNrOfMp3s() != nrOfSongsInDB) { infoPanel.showButton(infoPanel.updateButton, true); }
 
-            dbInfoPanel.showPanel();
-            view.addPanel(dbInfoPanel);
+            infoPanel.showPanel();
+            view.addPanel(infoPanel);
 
             showingInfo = true;
         }
     }
 
+    /**
+     * Listener inner class for buttons in dbInfoPanel and progress bar.
+     */
     private class InfoPanelListener implements ActionListener, PropertyChangeListener {
         /**
          * Actions for buttons in dbInfoPanel.
@@ -437,7 +441,7 @@ public class Controller implements ActionListener {
                 if(showingClose) { view.remove(startupPanel); showingClose = false; }
                 if(showingOpen) { view.remove(openPanel); showingOpen = false; }
                 if(showingNew) { view.remove(createPanel); showingNew = false; }
-                if(showingInfo) { view.remove(dbInfoPanel); showingInfo = false; }
+                if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
 
                 // setup menu items (same as startup + DISABLE new + ENABLE close, search, html
                 view.initializeMenu( false ); // false -> DISABLE open
@@ -479,6 +483,7 @@ public class Controller implements ActionListener {
 
                 //add the detailsPanel (fields empty until album or song is selected)
                 detailsPanel = new DetailsPanel(bgcolor);
+                detailsPanel.setDetailsButtonListener( new DetailsButtonListener() );
                 detailsPanel.showPanel();
                 view.addPanel(detailsPanel, BorderLayout.CENTER);
                 showingDetails = true;
@@ -495,7 +500,7 @@ public class Controller implements ActionListener {
         }
 
         /**
-         * Listener for the progress monitor.
+         * Listener for the progress bar.
          * @param evt the change event. 
          */
         public void propertyChange(PropertyChangeEvent evt) {
@@ -503,7 +508,7 @@ public class Controller implements ActionListener {
             if( "progress" == evt.getPropertyName() ) {
 
                 int progress = (Integer) evt.getNewValue();
-                dbInfoPanel.progressBar.setValue(progress);
+                infoPanel.progressBar.setValue(progress);
             }
         }
 
@@ -530,7 +535,9 @@ public class Controller implements ActionListener {
             // initialize task progress
             setProgress(0);
             // show the progressbar, max value is set to twice the number of mp3s in the entry's directory (one for reading the tags an one for inserting into database)
-            dbInfoPanel.showProgressBar( 2 * model.getNrOfMp3s() );
+            infoPanel.showProgressBar( 2 * model.getNrOfMp3s() );
+            // disable the nextButton in infoPanel
+            infoPanel.enableButton(infoPanel.nextButton, false);
 
             // get current selected entry
             DBEntry entry = model.getCurrentEntry();
@@ -539,10 +546,10 @@ public class Controller implements ActionListener {
             // create an instance of ReadDirectories to read the mp3 files in the album directory
             ReadDirectories read = new ReadDirectories(currentMp3dir, verbose);
             // read the tags of the files, pass the progressbar along to update progress
-            read.getFiles( dbInfoPanel.getTheProgressbar() );
+            read.getFiles( infoPanel.getTheProgressbar() );
 
             // get the progress (should be equal to number of read tags
-            int progressValue = dbInfoPanel.getTheProgressbar().getValue();
+            int progressValue = infoPanel.getTheProgressbar().getValue();
 
 
             if(verbose) System.out.println("\nUPDATING DATABASE:");
@@ -617,7 +624,7 @@ public class Controller implements ActionListener {
                         // update progress
                         progressValue++;
                         // update progress bar
-                        dbInfoPanel.getTheProgressbar().setValue(progressValue);
+                        infoPanel.getTheProgressbar().setValue(progressValue);
 
                         if(verbose) System.out.println(s.getTrack() + " - " + s.getTitle() );
                         nrOfSongsInDB = inserted;
@@ -638,17 +645,23 @@ public class Controller implements ActionListener {
          */
         @Override
         public void done() {
+
+            // denable the nextButton in infoPanel
+            infoPanel.enableButton(infoPanel.nextButton, true);
             // update text in labels
-            dbInfoPanel.setDBLabelText( String.format("%d songs in database.", nrOfSongsInDB) );
+            infoPanel.setDBLabelText( String.format("%d songs in database.", nrOfSongsInDB) );
             long taskTimeMs  = System.currentTimeMillis( ) - startTimeMs;
             //if(verbose) 
             System.out.println("\nTASK DONE: \nnrOfSongsInDB = " + nrOfSongsInDB + "\ntaskTime = " + taskTimeMs / 1000 + " seconds\n");
             // hide the update button
-            dbInfoPanel.hideButton(dbInfoPanel.updateButton);
+            infoPanel.showButton(infoPanel.updateButton, false);
 
         }
     }
 
+    /**
+     * Listener inner class for lists in listPanel.
+     */
     private class ListPanelListener implements ListSelectionListener {
         /**
          * Actions for lists in listPanel.
@@ -808,7 +821,6 @@ public class Controller implements ActionListener {
                                     detailsPanel.addToLameComboBox( entry.getKey() );
                                 }
                                 // bitrate
-                                //TODO: add vbr value (if any) to combobox
                                 integerMap = selAlbum.getCbrsMap();
                                 for( Map.Entry<Integer, Integer> entry : integerMap.entrySet() ) {
                                     detailsPanel.addToBitrateComboBox( entry.getKey() + "");
@@ -876,7 +888,6 @@ public class Controller implements ActionListener {
                                 detailsPanel.setTagTextField( rs.getString("tag") );
                                 detailsPanel.setTitleTextField( rs.getString("title") );
                                 detailsPanel.setTrackTextField( rs.getString("track") );
-                                //TODO: hide the various radio buttons?
                                 if( rs.getBoolean("vbr") ) detailsPanel.setVbr();  else detailsPanel.setNotVbr();
                                 detailsPanel.setYearTextField( rs.getString("songyear") );
                             }
@@ -888,4 +899,22 @@ public class Controller implements ActionListener {
 
     } // end class ListPanelListener
 
+    /**
+     * Listener inner class for buttons in detailsPanel.
+     */
+    private class DetailsButtonListener implements ActionListener {
+        /**
+         * Actions for the buttons in detailsPanel.
+         * @param ae the action event.
+         */
+        public void actionPerformed(ActionEvent ae) {
+            String actionCommand=ae.getActionCommand();
+
+            if( actionCommand.equals("cancelEdit") ) {
+                //TODO: implement actions for cancel button
+            } else if( actionCommand.equals("updateEdit") ) {
+                //TODO: implement actions for update button
+            }
+        }
+    }
 }

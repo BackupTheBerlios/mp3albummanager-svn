@@ -1,33 +1,65 @@
 package org.app.mp3AlbumManager.gui;
 
-import info.clearthought.layout.TableLayout;
-import info.clearthought.layout.TableLayoutConstraints;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ActionListener;
+
+import com.jeta.forms.components.panel.FormPanel;
 
 
 public class DetailsPanel extends JPanel implements ItemListener {
 
+    public static final String ID_TRACKTEXTFIELD = "trackTextField";  //javax.swing.JTextField
+    public static final String ID_TITLETEXTFIELD = "titleTextField";  //javax.swing.JTextField
+    public static final String ID_ARTISTTEXTFIELD = "artistTextField";  //javax.swing.JTextField
+    public static final String ID_LENGTHTEXTFIELD = "lengthTextField";  //javax.swing.JTextField
+    public static final String ID_SUBDIRTEXTFIELD = "subdirTextField";  //javax.swing.JTextField
+    public static final String ID_YEARTEXTFIELD = "yearTextField";  //javax.swing.JTextField
+    public static final String ID_GENRETEXTFIELD = "genreTextField";  //javax.swing.JTextField
+    public static final String ID_TAGTEXTFIELD = "tagTextField";  //javax.swing.JTextField
+    public static final String ID_LAMETEXTFIELD = "lameTextField";  //javax.swing.JTextField
+    public static final String ID_BITRATETEXTFIELD = "bitrateTextField";  //javax.swing.JTextField
+    public static final String ID_FREQUENCYTEXTFIELD = "frequencyTextField";  //javax.swing.JTextField
+    public static final String ID_MODETEXTFIELD = "modeTextField";  //javax.swing.JTextField
+
+    public static final String ID_ISVARIOUSRADIOBUTTON = "isVariousRadioButton";  //javax.swing.JRadioButton
+    public static final String ID_ISNOTVARIOUSRADIOBUTTON = "isNotVariousRadioButton";  //javax.swing.JRadioButton
+    public static final String ID_ISVBRRADIOBUTTON = "isVbrRadioButton";  //javax.swing.JRadioButton
+    public static final String ID_ISNOTVBRRADIOBUTTON = "isNotVbrRadioButton";  //javax.swing.JRadioButton
+
+    public static final String ID_MODECOMBOBOX = "modeComboBox";  //javax.swing.JComboBox
+    public static final String ID_FREQUENCYCOMBOBOX = "frequencyComboBox";  //javax.swing.JComboBox
+    public static final String ID_BITRATECOMBOBOX = "bitrateComboBox";  //javax.swing.JComboBox
+    public static final String ID_LAMECOMBOBOX = "lameComboBox";  //javax.swing.JComboBox
+    public static final String ID_TAGCOMBOBOX = "tagComboBox";  //javax.swing.JComboBox
+    public static final String ID_GENRECOMBOBOX = "genreComboBox";  //javax.swing.JComboBox
+    public static final String ID_YEARCOMBOBOX = "yearComboBox";  //javax.swing.JComboBox
+
+    public static final String ID_CANCELBUTTON = "cancelButton";  //javax.swing.JButton
+    public static final String ID_UPDATEBUTTON = "updateButton";  //javax.swing.JButton
+
+    // the form panel
+    private FormPanel detailsPanel;
+
+    // panel components
     private JTextField trackTextField, subdirTextField, lengthTextField;
     private JTextField artistTextField, titleTextField, yearTextField, genreTextField;
     private JTextField tagTextField, lameTextField, bitrateTextField, frequencyTextField, modeTextField;
-
     private JTextField[] editableFields;
-
     private JRadioButton isVariousRadioButton, isNotVariousRadioButton;
     private JRadioButton isVbrRadioButton, isNotVbrRadioButton;
-
     private JComboBox yearComboBox, genreComboBox, tagComboBox, lameComboBox;
     private JComboBox bitrateComboBox, frequencyComboBox, modeComboBox;
-
-    private JButton cancelButton, updateButton;
+    private JComboBox[] comboBoxes;
+    private AbstractButton cancelButton, updateButton;
 
     private Color bgcolor;
 
     public DetailsPanel(Color color) {
+
+        detailsPanel = new FormPanel("org/app/mp3AlbumManager/forms/detailsPanel.jfrm");
 
         bgcolor = color;
         initComponents();
@@ -40,250 +72,81 @@ public class DetailsPanel extends JPanel implements ItemListener {
     
     private void initComponents() {
 
-        JLabel detailsLabel = new JLabel();
-        JLabel trackLabel = new JLabel();
-        JLabel artistLabel = new JLabel();
-        JLabel titleLabel = new JLabel();
-        JLabel variousLabel = new JLabel();
-        JLabel subdirLabel = new JLabel();
-        JLabel lengthLabel = new JLabel();
-        JLabel yearLabel = new JLabel();
-        JLabel genreLabel = new JLabel();
-        JLabel tagLabel = new JLabel();
-        JLabel lameLabel = new JLabel();
-        JLabel bitrateLabel = new JLabel();
-        JLabel vbrLabel = new JLabel();
-        JLabel frequencyLabel = new JLabel();
-        JLabel modeLabel = new JLabel();
-
-        trackTextField = new JTextField();
-        artistTextField = new JTextField();
-        titleTextField = new JTextField();
-        subdirTextField = new JTextField();
-        lengthTextField = new JTextField();
-        yearTextField = new JTextField();
-        genreTextField = new JTextField();
-        tagTextField = new JTextField();
-        lameTextField = new JTextField();
-        bitrateTextField = new JTextField();
-        frequencyTextField = new JTextField();
-        modeTextField = new JTextField();
+        trackTextField = detailsPanel.getTextField(ID_TRACKTEXTFIELD);
+        artistTextField = detailsPanel.getTextField(ID_ARTISTTEXTFIELD);
+        titleTextField = detailsPanel.getTextField(ID_TITLETEXTFIELD);
+        subdirTextField = detailsPanel.getTextField(ID_SUBDIRTEXTFIELD);
+        lengthTextField = detailsPanel.getTextField(ID_LENGTHTEXTFIELD);
+        yearTextField = detailsPanel.getTextField(ID_YEARTEXTFIELD);
+        genreTextField = detailsPanel.getTextField(ID_GENRETEXTFIELD);
+        tagTextField = detailsPanel.getTextField(ID_TAGTEXTFIELD);
+        lameTextField = detailsPanel.getTextField(ID_LAMETEXTFIELD);
+        bitrateTextField = detailsPanel.getTextField(ID_BITRATETEXTFIELD);
+        frequencyTextField = detailsPanel.getTextField(ID_FREQUENCYTEXTFIELD);
+        modeTextField = detailsPanel.getTextField(ID_MODETEXTFIELD);
 
         editableFields = new JTextField[] { trackTextField, artistTextField, titleTextField,
             yearTextField, genreTextField, tagTextField, lameTextField, bitrateTextField,
             frequencyTextField, modeTextField };
 
-        isVariousRadioButton = new JRadioButton();
-        isNotVariousRadioButton = new JRadioButton();
-        isVbrRadioButton = new JRadioButton();
-        isNotVbrRadioButton = new JRadioButton();
+        isVariousRadioButton = detailsPanel.getRadioButton(ID_ISVARIOUSRADIOBUTTON);
+        isNotVariousRadioButton = detailsPanel.getRadioButton(ID_ISNOTVARIOUSRADIOBUTTON);
+        isVbrRadioButton = detailsPanel.getRadioButton(ID_ISVBRRADIOBUTTON);
+        isNotVbrRadioButton = detailsPanel.getRadioButton(ID_ISNOTVBRRADIOBUTTON);
 
-        ButtonGroup variousButtonGroup = new ButtonGroup();
-        ButtonGroup vbrButtonGroup = new ButtonGroup();
+        yearComboBox = detailsPanel.getComboBox(ID_YEARCOMBOBOX);
+        genreComboBox = detailsPanel.getComboBox(ID_GENRECOMBOBOX);
+        tagComboBox = detailsPanel.getComboBox(ID_TAGCOMBOBOX);
+        lameComboBox = detailsPanel.getComboBox(ID_LAMECOMBOBOX);
+        bitrateComboBox = detailsPanel.getComboBox(ID_BITRATECOMBOBOX);
+        frequencyComboBox = detailsPanel.getComboBox(ID_FREQUENCYCOMBOBOX);
+        modeComboBox = detailsPanel.getComboBox(ID_MODECOMBOBOX);
 
-        yearComboBox = new JComboBox();
-        genreComboBox = new JComboBox();
-        tagComboBox = new JComboBox();
-        lameComboBox = new JComboBox();
-        bitrateComboBox = new JComboBox();
-        frequencyComboBox = new JComboBox();
-        modeComboBox = new JComboBox();
+        comboBoxes = new JComboBox[] {yearComboBox, genreComboBox, tagComboBox, lameComboBox,
+            bitrateComboBox, frequencyComboBox, modeComboBox};
+        cancelButton = detailsPanel.getButton(ID_CANCELBUTTON);
+        updateButton = detailsPanel.getButton(ID_UPDATEBUTTON);
 
-        cancelButton = new JButton();
-        updateButton = new JButton();
-
-
-
-        //TableLayout
-        setLayout(
-            new TableLayout(
-                new double[][] {
-                    {
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED
-                    },
-                    {
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED,
-                        TableLayout.PREFERRED
-                    }
-                }
-            )
-        );
-
-        ( (TableLayout) getLayout() ).setHGap(5);
-        ( (TableLayout) getLayout() ).setVGap(5);
-
-        //======== this ========
-        setBackground(bgcolor);
-        
-        //---- detailsLabel ----
-        detailsLabel.setText("DETAILS");
-        add(detailsLabel, new TableLayoutConstraints(0, 0, 0, 0, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- trackLabel ----
-        trackLabel.setText("Track number");
-        add(trackLabel, new TableLayoutConstraints(0, 1, 0, 1, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- artistLabel ----
-        artistLabel.setText("Artist");
-        add(artistLabel, new TableLayoutConstraints(0, 3, 0, 3, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- titleLabel ----
-        titleLabel.setText("Title");
-        add(titleLabel, new TableLayoutConstraints(0, 2, 0, 2, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- variousLabel ----
-        variousLabel.setText("Various artists");
-        add(variousLabel, new TableLayoutConstraints(0, 4, 0, 4, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- subdirLabel ----
-        subdirLabel.setText("Subdirectory");
-        add(subdirLabel, new TableLayoutConstraints(0, 6, 0, 6, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- lengthLabel ----
-        lengthLabel.setText("Length");
-        lengthLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        add(lengthLabel, new TableLayoutConstraints(3, 6, 3, 6, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- yearLabel ----
-        yearLabel.setText("Year");
-        add(yearLabel, new TableLayoutConstraints(0, 7, 0, 7, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- genreLabel ----
-        genreLabel.setText("Genre");
-        add(genreLabel, new TableLayoutConstraints(0, 8, 0, 8, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- tagLabel ----
-        tagLabel.setText("Tag version");
-        add(tagLabel, new TableLayoutConstraints(0, 9, 0, 9, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- lameLabel ----
-        lameLabel.setText("Lame version");
-        add(lameLabel, new TableLayoutConstraints(0, 10, 0, 10, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- bitrateLabel ----
-        bitrateLabel.setText("Audio bitrate");
-        add(bitrateLabel, new TableLayoutConstraints(0, 11, 0, 11, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- vbrLabel ----
-        vbrLabel.setText("VBR");
-        add(vbrLabel, new TableLayoutConstraints(0, 12, 0, 12, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- frequencyLabel ----
-        frequencyLabel.setText("Samplerate");
-        add(frequencyLabel, new TableLayoutConstraints(0, 13, 0, 13, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- modeLabel ----
-        modeLabel.setText("Audio mode");
-        add(modeLabel, new TableLayoutConstraints(0, 14, 0, 14, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-
-        //---- trackTextField ----
-        trackTextField.setEditable(false);
-        add(trackTextField, new TableLayoutConstraints(1, 1, 1, 1, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- titleTextField ----
-        titleTextField.setEditable(false);
-        add(titleTextField, new TableLayoutConstraints(1, 2, 4, 2, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- artistTextField ----
-        artistTextField.setEditable(false);
-        add(artistTextField, new TableLayoutConstraints(1, 3, 4, 3, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- subdirTextField ----
+        // set fields initially to not editable
+        setEditableFields(false);
         subdirTextField.setEditable(false);
-        add(subdirTextField, new TableLayoutConstraints(1, 6, 2, 6, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- lengthTextField ----
         lengthTextField.setEditable(false);
-        add(lengthTextField, new TableLayoutConstraints(4, 6, 4, 6, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- yearTextField ----
-        yearTextField.setEditable(false);
-        add(yearTextField, new TableLayoutConstraints(1, 7, 2, 7, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- genreTextField ----
-        genreTextField.setEditable(false);
-        add(genreTextField, new TableLayoutConstraints(1, 8, 2, 8, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- tagTextField ----
-        tagTextField.setEditable(false);
-        add(tagTextField, new TableLayoutConstraints(1, 9, 2, 9, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- lameTextField ----
-        lameTextField.setEditable(false);
-        add(lameTextField, new TableLayoutConstraints(1, 10, 2, 10, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- bitrateTextField ----
-        bitrateTextField.setEditable(false);
-        add(bitrateTextField, new TableLayoutConstraints(1, 11, 2, 11, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- frequencyTextField ----
-        frequencyTextField.setEditable(false);
-        add(frequencyTextField, new TableLayoutConstraints(1, 13, 2, 13, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- modeTextField ----
-        modeTextField.setEditable(false);
-        add(modeTextField, new TableLayoutConstraints(1, 14, 2, 14, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
 
-        //---- yearComboBox ----
-        yearComboBox.setPrototypeDisplayValue("2000");
-        yearComboBox.addItemListener(this);
-        add(yearComboBox, new TableLayoutConstraints(3, 7, 4, 7, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- genreComboBox ----
-        genreComboBox.setPrototypeDisplayValue("Dance Hall");
-        genreComboBox.addItemListener(this);
-        add(genreComboBox, new TableLayoutConstraints(3, 8, 4, 8, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- tagComboBox ----
-        tagComboBox.setPrototypeDisplayValue("ID3v2.40");
-        tagComboBox.addItemListener(this);
-        add(tagComboBox, new TableLayoutConstraints(3, 9, 4, 9, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- lameComboBox ----
-        lameComboBox.setPrototypeDisplayValue("LAME3.90.3");
-        lameComboBox.addItemListener(this);
-        add(lameComboBox, new TableLayoutConstraints(3, 10, 4, 10, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- bitrateComboBox ----
-        bitrateComboBox.setPrototypeDisplayValue("320 kbps");
-        bitrateComboBox.addItemListener(this);
-        add(bitrateComboBox, new TableLayoutConstraints(3, 11, 4, 11, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- frequencyComboBox ----
-        frequencyComboBox.setPrototypeDisplayValue("44100 Hz");
-        frequencyComboBox.addItemListener(this);
-        add(frequencyComboBox, new TableLayoutConstraints(3, 13, 4, 13, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- modeComboBox ----
-        modeComboBox.setPrototypeDisplayValue("Dual Channel");
-        modeComboBox.addItemListener(this);
-        add(modeComboBox, new TableLayoutConstraints(3, 14, 4, 14, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
+        // add listener to comboboxes
+        for(JComboBox c : comboBoxes) { c.addItemListener(this); }
 
         //---- isVbrRadioButton ----
-        isVbrRadioButton.setText("Yes");
         isVbrRadioButton.setBackground(bgcolor);
-        add(isVbrRadioButton, new TableLayoutConstraints(1, 12, 1, 12, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
+
         //---- isNotVbrRadioButton ----
-        isNotVbrRadioButton.setText("No");
         isNotVbrRadioButton.setSelected(true);
         isNotVbrRadioButton.setBackground(bgcolor);
-        add(isNotVbrRadioButton, new TableLayoutConstraints(2, 12, 2, 12, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- vbrButtonGroup ----
-        vbrButtonGroup.add(isVbrRadioButton);
-        vbrButtonGroup.add(isNotVbrRadioButton);
 
         //---- isVariousRadioButton ----
-        isVariousRadioButton.setText("Yes");
         isVariousRadioButton.setBackground(bgcolor);
-        add(isVariousRadioButton, new TableLayoutConstraints(1, 4, 1, 4, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
+
         //---- isNotVariousRadioButton ----
-        isNotVariousRadioButton.setText("No");
         isNotVariousRadioButton.setSelected(true);
         isNotVariousRadioButton.setBackground(bgcolor);
-        add(isNotVariousRadioButton, new TableLayoutConstraints(2, 4, 2, 4, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- variousButtonGroup ----
-        variousButtonGroup.add(isVariousRadioButton);
-        variousButtonGroup.add(isNotVariousRadioButton);
-
-        //TODO: set listeners for edit buttons (cancel, update)
-        //---- cancelButton ----
-        cancelButton.setText("CANCEL");
-        add(cancelButton, new TableLayoutConstraints(3, 16, 3, 16, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
-        //---- updateButton ----
-        updateButton.setText("UPDATE");
-        add(updateButton, new TableLayoutConstraints(4, 16, 4, 16, TableLayoutConstraints.FULL, TableLayoutConstraints.FULL));
 
         // initially hide the edit buttons and the comboboxes
         showEditButtons(false);
         showComboBoxes(false);
+
+        //======== this ========
+        setBackground(bgcolor);
+
+        //LAYOUT
+        setLayout( new BorderLayout() );
+        add( detailsPanel, BorderLayout.CENTER );
+    }
+
+    public void setDetailsButtonListener(ActionListener al) {
+
+        cancelButton.addActionListener(al);
+        cancelButton.setActionCommand("cancelEdit");
+        updateButton.addActionListener(al);
+        updateButton.setActionCommand("updateEdit");
     }
 
     // GETTERS
@@ -372,27 +235,13 @@ public class DetailsPanel extends JPanel implements ItemListener {
     public void addToModeComboBox(String s) { modeComboBox.addItem(s); }
 
     public void resetAllFields() {
-        trackTextField.setText("");
-        artistTextField.setText("");
-        titleTextField.setText("");
+
+        for(JTextField f : editableFields) { f.setText(""); }
         subdirTextField.setText("");
         lengthTextField.setText("");
-        yearTextField.setText("");
-        genreTextField.setText("");
-        tagTextField.setText("");
-        lameTextField.setText("");
-        bitrateTextField.setText("");
-        frequencyTextField.setText("");
-        modeTextField.setText("");
         setNotVarious();
         setNotVbr();
-        yearComboBox.removeAllItems();
-        genreComboBox.removeAllItems();
-        tagComboBox.removeAllItems();
-        lameComboBox.removeAllItems();
-        bitrateComboBox.removeAllItems();
-        frequencyComboBox.removeAllItems();
-        modeComboBox.removeAllItems();
+        for(JComboBox c : comboBoxes) { c.removeAllItems(); }
     }
 
     // set fields in array to editable
@@ -408,13 +257,8 @@ public class DetailsPanel extends JPanel implements ItemListener {
     }
 
     public void showComboBoxes(boolean value) {
-        yearComboBox.setVisible(value);
-        genreComboBox.setVisible(value);
-        tagComboBox.setVisible(value);
-        lameComboBox.setVisible(value);
-        bitrateComboBox.setVisible(value);
-        frequencyComboBox.setVisible(value);
-        modeComboBox.setVisible(value);
+
+        for(JComboBox c : comboBoxes) { c.setVisible(value); }
     }
 
     // LISTENER for comboboxes
@@ -448,5 +292,5 @@ public class DetailsPanel extends JPanel implements ItemListener {
             modeTextField.setText( getModeComboBox() );
         }
 
-    }
+    } // end listener method
 }
