@@ -138,30 +138,25 @@ public class ReadDirectories {
      */
     void scanFile(File file) {
 
-        MP3File mp3file = null;
-        MP3AudioHeader audioHeader = null;
-        Tag mp3tag = null;
-        ID3v1Tag v1tag;
-        AbstractID3v2Tag v2tag = null;
+        if(verbose) System.out.println("FILE: " + file);
+
         boolean foundID3v1 = false, foundID3v2 = false;
         String track, artist, title, year, genre, tag, lame;
         String mode;
         Integer length, bitrate, frequency;
         Boolean vbr;
 
-        if(verbose) System.out.println("FILE: " + file);
-
         //----------- get the tag -----------------
-
+        AbstractID3v2Tag v2tag = null;
         try {
-            mp3file = new MP3File(file);
-            audioHeader = mp3file.getMP3AudioHeader();
-            mp3tag = mp3file.getTag();
+            MP3File  mp3file = new MP3File(file);
+            MP3AudioHeader audioHeader = mp3file.getMP3AudioHeader();
+            Tag mp3tag = mp3file.getTag();
 
             tag = "";
 
             if( mp3file.hasID3v1Tag() ) {
-                v1tag = (ID3v1Tag) mp3tag;
+                ID3v1Tag v1tag = (ID3v1Tag) mp3tag;
                 tag += v1tag.getIdentifier();
                 foundID3v1 = true;
             }
@@ -182,37 +177,23 @@ public class ReadDirectories {
                 year = v2tag.getFirst(ID3v24Frames.FRAME_ID_YEAR);
                 genre = v2tag.getFirst(ID3v24Frames.FRAME_ID_GENRE);
             } else {
-                System.err.println("ERROR: No ID3v2 tag found:\n\t" + file);
+                if(verbose) System.err.println("ERROR: No ID3v2 tag found:\n\t" + file);
                 return;
             }
 
+            // get length
             length = audioHeader.getTrackLength(); //seconds
 
             // get lame frame
-            /*
-            new MP3AudioHeader(file).getEncoder();  // -> NULL
+            lame = audioHeader.getEncoder();
 
-            FileChannel fc = null;
-            ByteBuffer bb = null;
-
-            fc = new FileInputStream(file).getChannel();
-            //TODO: fix get lame string, need to find start position of lame header 
-            bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, file.length() );
-            String id = Utils.getString(bb, 0, 4 , TextEncoding.CHARSET_UTF_8);
-
-            if(verbose) System.out.println("======> LAME ID: " + id);
-            bb.rewind();
-            if (id.equals("LAME")) { lame = Utils.getString(bb, 0, 9, TextEncoding.CHARSET_UTF_8); }
-            else
-            */
-            lame = "";
-
-
+            // get bitrate
             String bitrateAsString = "" + audioHeader.getBitRateAsNumber(); // kbps
             bitrate = Integer.parseInt(bitrateAsString);
             vbr = audioHeader.isVariableBitRate();
             frequency = audioHeader.getSampleRateAsNumber(); // Hz
 
+            // get audio mode
             mode = audioHeader.getChannels(); // Stereo, Joint Stereo, Dual or Mono
 
             //----------- set album dir and subdir -----------------
@@ -243,7 +224,6 @@ public class ReadDirectories {
             } else {
                 if(verbose) System.out.println("ERROR: Failed to get album artist, title, year (Album dir is null)\n");
             }
-
 
             //----------- create the song -----------------
 
@@ -294,13 +274,13 @@ public class ReadDirectories {
             if(verbose) System.out.println();
 
         } catch (IOException e) {
-            System.out.println("ERROR: IOException reading file\n\t" + file);
+            if(verbose) System.err.println("ERROR: IOException reading file\n\t" + file);
         } catch (TagException e) {
-            System.out.println("ERROR: TagException reading file\n\t" + file);
+            if(verbose) System.err.println("ERROR: TagException reading file\n\t" + file);
         } catch (ReadOnlyFileException e) {
-            System.out.println("ERROR: ReadOnlyFileException reading file\n\t" + file);
+            if(verbose) System.err.println("ERROR: ReadOnlyFileException reading file\n\t" + file);
         } catch (InvalidAudioFrameException e) {
-            System.out.println("ERROR: InvalidAudioFrameException reading file\n\t" + file);
+            if(verbose) System.err.println("ERROR: InvalidAudioFrameException reading file\n\t" + file);
         }
     }
 

@@ -17,6 +17,11 @@
 	<property name="doc.dir" location="doc" />
     <property name="javadoc.dir" location="doc/javadoc" />
 
+    <!-- include the jfrms -->
+    <patternset id="jfrms">
+        <include name="**/?*.jfrm"/>
+    </patternset>
+
     <!-- Define the classpath which includes the required library jars and the configuration file-->
     <path id="dist.classpath">
         <fileset dir="${lib.dir}" includes="**/*.jar, **/*.zip" />
@@ -27,9 +32,6 @@
 	</path>
     <path id="jaudiotagger.class.path">
 		<pathelement location="${lib.dir}/jaudiotagger.jar" />
-	</path>
-    <path id="tablelayout.class.path">
-		<pathelement location="${lib.dir}/TableLayout.jar" />
 	</path>
     <path id="abeille.class.path">
 		<pathelement location="${lib.dir}/formsrt.jar" />
@@ -61,7 +63,7 @@
         <mkdir dir="${javadoc.dir}" />
 	</target>
 
-    <!-- Compiles the java code and includes library jars -->
+    <!-- Compiles the java code and include resources -->
 	<target name="compile" depends="clean, makedir">
         <copy todir="${build.dir}/res">
             <fileset dir="${res.dir}" />
@@ -69,10 +71,14 @@
         <copy todir="${build.dir}/config">
             <fileset dir="${config.dir}" />
         </copy>
+        <copy todir="${build.dir}">
+            <fileset dir="${src.dir}">
+                <patternset refid="jfrms"/>
+            </fileset>
+        </copy>
 		<javac srcdir="${src.dir}" destdir="${build.dir}">
             <classpath refid="h2.class.path" />
             <classpath refid="jaudiotagger.class.path" />
-            <classpath refid="tablelayout.class.path" />
             <classpath refid="abeille.class.path" />
             <classpath refid="configuration.class.path" />
             <classpath refid="build.class.path" />

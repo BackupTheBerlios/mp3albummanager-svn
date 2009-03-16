@@ -18,10 +18,9 @@ import java.awt.*;
 import java.io.File;
 import java.sql.*;
 import java.util.*;
+import java.util.List;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
-
-import com.jeta.forms.components.panel.FormPanel;
 
 public class Controller implements ActionListener {
     /**
@@ -38,6 +37,7 @@ public class Controller implements ActionListener {
     private CreateDBPanel createPanel;
     private InfoDBPanel infoPanel;
     private ListPanel listPanel;
+    private String selectedSongFilename, selectedAlbumDirectory;
     private DetailsPanel detailsPanel;
 
     public int nrOfSongsInDB;
@@ -83,7 +83,6 @@ public class Controller implements ActionListener {
 
         String actionCommand=ae.getActionCommand();
 
-        //TODO: any cleanup before quit application?
         if( actionCommand.equals("quit") ) { System.exit(0); }
 
         if( actionCommand.equals("close") ) {
@@ -177,9 +176,9 @@ public class Controller implements ActionListener {
         } else if( actionCommand.equals("nfo") ) {
 
             // get selected album in listPanel
-            String selectedAlbum = (String) listPanel.albumList.getSelectedValue();
+            String selAlbumTitle = (String) listPanel.albumList.getSelectedValue();
             // get the nfo content
-            StringBuffer content = model.getNfoContent(selectedAlbum);
+            StringBuffer content = model.getNfoContent(selAlbumTitle);
 
             // get a preformatted jtextarea from view
             JTextArea nfoContent = view.setTextAreaContent( content.toString() );
@@ -289,7 +288,7 @@ public class Controller implements ActionListener {
                 }
 
                 if(conn == null) {
-                    openPanel.setMessageLabel("Problem connecting to database: Wrong username or incorrect password. Please try again.");
+                    openPanel.setMessageLabel("Problem connecting to database. Please try again.");
                 } else {
                     showDBInfoPanel(mp3Dir);
                 }
@@ -297,17 +296,19 @@ public class Controller implements ActionListener {
             } else if( actionCommand.equals("createDB") ) {
                 // get field values for name, directory, username & password
                 // check if any field is empty
-                //TODO: check that dbname is unique, ie not found in earlier db entries
                 String dbName = createPanel.getCollectionField();
+                // check if the dbName is already used
+                List<String> dbNames = Arrays.asList( model.getNamesFromEntries() );
+                if( dbNames.contains(dbName)) { createPanel.setMessageLabel("The database name is already in use. Select another name."); return; }
                 if( dbName.isEmpty() ) { createPanel.setMessageLabel("Please fill in a database name"); return; }
                 String user = createPanel.getUserField();
                 if( user.isEmpty() ) { createPanel.setMessageLabel("Please fill in a username"); return; }
                 String pass = createPanel.getPassField();
                 if( pass.isEmpty() ) { createPanel.setMessageLabel("Please fill in a password"); return; }
                 String mp3Dir = createPanel.getMusicField();
-                if( mp3Dir.isEmpty() || ! mp3Dir.startsWith("/")) { createPanel.setMessageLabel("Please set albums directory"); return; }
+                if( mp3Dir.isEmpty() || ! mp3Dir.startsWith("/")) { createPanel.setMessageLabel("Please select album directory"); return; }
                 String dbDir = createPanel.getDBDirField();
-                if( dbDir.isEmpty() || ! dbDir.startsWith("/")) { createPanel.setMessageLabel("Please set database directory"); return; }
+                if( dbDir.isEmpty() || ! dbDir.startsWith("/")) { createPanel.setMessageLabel("Please select database directory"); return; }
 
                 // create new entry
                 DBEntry newEntry = new DBEntry(dbName, dbDir, mp3Dir);
@@ -402,7 +403,6 @@ public class Controller implements ActionListener {
             // add found mp3 files to current entry
             model.addMp3Files(currentMp3dir);
 
-
             // format text to send to infopanel labels
             String firstLabel = String.format("%d songs in database.", nrOfSongsInDB);
             String secondLabel = String.format("%d songs found in album directory.", model.getNrOfMp3s() );
@@ -414,8 +414,10 @@ public class Controller implements ActionListener {
             //      db entry exists though file has been deleted -> deleted
             //      file exists but not found in db -> new
 
-            // show update button if nr of mp3s != nr of records
-            if( model.getNrOfMp3s() != nrOfSongsInDB) { infoPanel.showButton(infoPanel.updateButton, true); }
+            // show update button if nrOfmp3s > 0 and nrOfmp3s != nrOfsongs
+            if( model.getNrOfMp3s() > 0 && model.getNrOfMp3s() != nrOfSongsInDB) {
+                infoPanel.showButton(infoPanel.updateButton, true);
+            }
 
             infoPanel.showPanel();
             view.addPanel(infoPanel);
@@ -505,7 +507,7 @@ public class Controller implements ActionListener {
          */
         public void propertyChange(PropertyChangeEvent evt) {
 
-            if( "progress" == evt.getPropertyName() ) {
+            if( evt.getPropertyName().equals("progress") ) {
 
                 int progress = (Integer) evt.getNewValue();
                 infoPanel.progressBar.setValue(progress);
@@ -682,15 +684,16 @@ public class Controller implements ActionListener {
                         // no selection
 
                     } else {
-                        // an album is selected
-                        String selectedAlbum = (String) listPanel.albumList.getSelectedValue();
-                        if(verbose) System.out.println("\nSelected an album: " + selectedAlbum);
+                        //------ an album is selected --------
+                        String selAlbumTitle = (String) listPanel.albumList.getSelectedValue();
+                        if(verbose) System.out.println("\nSelected an album: " + selAlbumTitle);
 
                         // empty all fields in details panel
                         detailsPanel.resetAllFields();
 
-                        // selected ALL ALBUMS
-                        if( selectedAlbum.equals(ALL_ALBUMS_ITEM) ) {
+                        //------ ALL ALBUMS is selected --------
+
+                        if( selAlbumTitle.equals(ALL_ALBUMS_ITEM) ) {
                             // disable edit, delete, NFO in menu
                             view.disableMenuItem(view.menuItemEdit);
                             view.disableButton(view.editButton);
@@ -702,7 +705,7 @@ public class Controller implements ActionListener {
                             // empty the songlist
                             listPanel.songListModel.removeAllElements();
                             // show all songs in the songlist
-                            String songsQuery = "SELECT title FROM Song ORDER BY title";
+                            String songsQuery = "SELECT * FROM Song ORDER BY title";
                             ResultSet rs = model.getDAO().doSelectQuery(songsQuery, model.getDAO().getConnection(), false);
                             try {
                                 while(rs.next()) {
@@ -713,7 +716,7 @@ public class Controller implements ActionListener {
                             return;
                         }
 
-                        // selected a single album
+                        //------ an single album is selected --------
 
                         // enable edit, delete, NFO in menu
                         view.enableMenuItem(view.menuItemEdit);
@@ -723,12 +726,12 @@ public class Controller implements ActionListener {
                         view.enableMenuItem(view.menuItemNFO);
                         view.enableButton(view.nfoButton);
 
-                        // get the album fields for the selected album
+                        // get the album properties for the selected album
                         Album selAlbum = null;
                         String prepSelect = "SELECT * FROM Album WHERE title=?";
                         try {
                             PreparedStatement stmt = model.getDAO().getConnection().prepareStatement(prepSelect);
-                            stmt.setString(1, selectedAlbum);
+                            stmt.setString(1, selAlbumTitle);
                             ResultSet rs = model.getDAO().executePreparedStmt(stmt);
                             while( rs.next() ) {
                                 String albumDirectory = rs.getString("directory");
@@ -754,6 +757,8 @@ public class Controller implements ActionListener {
                                 detailsPanel.setYearTextField( albumYear );
                                 // create an album instance
                                 selAlbum = new Album(new File( albumDirectory ), albumArtist, albumTitle, albumYear, variousAlbum );
+                                // set the selected album (to be used for edit command)
+                                selectedAlbumDirectory = albumDirectory;
                             }
                         } catch(SQLException e2) { e2.printStackTrace(); }
 
@@ -764,7 +769,7 @@ public class Controller implements ActionListener {
                         String prepSonglist = "SELECT * FROM Song WHERE album=? ORDER BY title";
                         try {
                             PreparedStatement stmtSonglist = model.getDAO().getConnection().prepareStatement(prepSonglist);
-                            stmtSonglist.setString(1, selectedAlbum);
+                            stmtSonglist.setString(1, selAlbumTitle);
                             ResultSet rs = model.getDAO().executePreparedStmt(stmtSonglist);
                             while(rs.next()) {
                                 // get the song properties
@@ -852,7 +857,9 @@ public class Controller implements ActionListener {
                     if(selectedIndex == -1) {
                         // no selection
                     } else {
-                        // a song is selected
+
+                        //------ a song is selected --------
+
                         String selectedSong = (String) listPanel.songList.getSelectedValue();
                         if(verbose) System.out.println("\nSelected a song: " + selectedSong);
 
@@ -868,7 +875,7 @@ public class Controller implements ActionListener {
                         view.disableMenuItem(view.menuItemNFO);
                         view.disableButton(view.nfoButton);
 
-                        // get the song fields
+                        // get the song properties
                         String prepSelect = "SELECT * FROM Song WHERE title=?";
                         try {
                             PreparedStatement stmt = model.getDAO().getConnection().prepareStatement(prepSelect);
@@ -890,6 +897,8 @@ public class Controller implements ActionListener {
                                 detailsPanel.setTrackTextField( rs.getString("track") );
                                 if( rs.getBoolean("vbr") ) detailsPanel.setVbr();  else detailsPanel.setNotVbr();
                                 detailsPanel.setYearTextField( rs.getString("songyear") );
+                                // set the selected song (to be used by edit command)
+                                selectedSongFilename = rs.getString("filename");
                             }
                         } catch(SQLException e5) { e5.printStackTrace(); }
                     }
@@ -908,13 +917,144 @@ public class Controller implements ActionListener {
          * @param ae the action event.
          */
         public void actionPerformed(ActionEvent ae) {
+
             String actionCommand=ae.getActionCommand();
 
             if( actionCommand.equals("cancelEdit") ) {
-                //TODO: implement actions for cancel button
+                // make fields editable and show buttons
+                detailsPanel.setEditableFields(false);
+                detailsPanel.showEditButtons(false);
+                detailsPanel.showComboBoxes(false);
+                // setup menu items (same as startup + DISABLE new + ENABLE close, search, html
+                view.initializeMenu( false ); // false -> DISABLE open
+                view.disableMenuItem(view.menuItemNew);
+                view.disableButton(view.newButton);
+
+                view.enableMenuItem(view.menuItemClose);
+                view.enableButton(view.closeButton);
+                view.enableMenuItem(view.menuItemSearch);
+                view.enableButton(view.searchButton);
+                view.enableMenuItem(view.menuItemHTML);
+                view.enableButton(view.htmlButton);
+
             } else if( actionCommand.equals("updateEdit") ) {
                 //TODO: implement actions for update button
+                // read properties from textfields
+                String artist = detailsPanel.getArtistTextField();
+                String bitrateString = detailsPanel.getBitrateTextField();
+                Integer bitrate = null;
+                if( bitrateString != null || bitrateString.isEmpty() ) {
+                    bitrate = Integer.parseInt(bitrateString);
+                }
+                String freqString = detailsPanel.getFrequencyTextField();
+                Integer frequency = null;
+                if( freqString != null || freqString.isEmpty() ) {
+                    frequency = Integer.parseInt(freqString);
+                }
+                //String genre = model.getGenreNr( detailsPanel.getGenreTextField() );
+                String genre = detailsPanel.getGenreTextField();
+                System.out.println("genre="+genre+" -> null=" + (genre==null) + ", empty=" + (genre.isEmpty()));
+
+                String lame = detailsPanel.getLameTextField();
+                String mode = detailsPanel.getModeTextField();
+                String tag = detailsPanel.getTagTextField();
+                String title = detailsPanel.getTitleTextField();
+                String track = detailsPanel.getTrackTextField();
+                Boolean various = detailsPanel.getVarious();
+                Boolean vbr = detailsPanel.getVbr();
+                String year = detailsPanel.getYearTextField();
+
+                //TODO: fix bug when updating an album
+                // fields are not updated after update (they are blank)
+                // when reopen db the fields are updated but the song list is empty!
+
+                // get selected song or album and construct query
+                String updateQuery;
+                PreparedStatement prepStmt;
+                boolean success = false;
+                String type = "";
+                if( listPanel.songList.getSelectedIndex() == -1 ) {
+                    // an album is selected
+                    if( listPanel.albumList.getSelectedIndex() == -1 ) {
+                        // nothing is selected (this should not be happening)
+                    } else if( listPanel.albumList.getSelectedIndex() == 0 ) {
+                        // ALL ALBUMS is selected
+                    } else {
+                        // a single album is selected
+                        if(verbose) System.out.println("Edit album: " + selectedAlbumDirectory);
+                        // note: do NOT enclose any question marks with single quotes (query will fail)
+                        updateQuery = "UPDATE Album SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, various=?, vbr=?, albumyear=? " +
+                                "WHERE directory=?";
+                        try {
+                            prepStmt = model.getDAO().getConnection().prepareStatement(updateQuery);
+                            prepStmt.setString(1, artist);
+                            prepStmt.setInt(2, bitrate);
+                            prepStmt.setInt(3, frequency);
+                            prepStmt.setString(4, genre);
+                            prepStmt.setString(5, lame);
+                            prepStmt.setString(6, mode);
+                            prepStmt.setString(7, tag);
+                            prepStmt.setString(8, title);
+                            prepStmt.setBoolean(9, various);
+                            prepStmt.setBoolean(10, vbr);
+                            prepStmt.setString(11, year);
+                            prepStmt.setString(12, selectedAlbumDirectory);
+                            System.out.println( "UPDATE query:\n" + prepStmt.toString() );
+                            success = model.getDAO().insertValues(prepStmt);
+                            type = "Album";
+                            prepStmt.close();
+                        } catch (SQLException e) { e.printStackTrace(); }
+                    }
+                } else {
+                    // a song is selected
+                    if(verbose) System.out.println("Edit song: " + selectedSongFilename);
+                    updateQuery = "UPDATE Song SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, track=?, vbr=?, songyear=? " +
+                            "WHERE filename=?";
+                    try {
+                        prepStmt = model.getDAO().getConnection().prepareStatement(updateQuery);
+                        prepStmt.setString(1, artist);
+                        prepStmt.setInt(2, bitrate);
+                        prepStmt.setInt(3, frequency);
+                        prepStmt.setString(4, genre);
+                        prepStmt.setString(5, lame);
+                        prepStmt.setString(6, mode);
+                        prepStmt.setString(7, tag);
+                        prepStmt.setString(8, title);
+                        prepStmt.setString(9, track);
+                        prepStmt.setBoolean(10, vbr);
+                        prepStmt.setString(11, year);
+                        prepStmt.setString(12, selectedSongFilename);
+
+                        success = model.getDAO().insertValues(prepStmt);
+                        type = "Song";
+                        prepStmt.close();
+                    } catch (SQLException e) { e.printStackTrace(); }
+
+                }
+                // show some confirmation (JOptionPane ?)
+                String msg = (success) ? "Successfully updated " + type : "Failed to update " + type;
+                JOptionPane.showMessageDialog(null, msg, "Edit", JOptionPane.INFORMATION_MESSAGE);
+
+                // set fields to not editable and hide the edit buttons (like cancelEdit above)
+                //if(option == 1) {
+                    // make fields editable and show buttons
+                    detailsPanel.setEditableFields(false);
+                    detailsPanel.showEditButtons(false);
+                    detailsPanel.showComboBoxes(false);
+                    // setup menu items (same as startup + DISABLE new + ENABLE close, search, html
+                    view.initializeMenu( false ); // false -> DISABLE open
+                    view.disableMenuItem(view.menuItemNew);
+                    view.disableButton(view.newButton);
+
+                    view.enableMenuItem(view.menuItemClose);
+                    view.enableButton(view.closeButton);
+                    view.enableMenuItem(view.menuItemSearch);
+                    view.enableButton(view.searchButton);
+                    view.enableMenuItem(view.menuItemHTML);
+                    view.enableButton(view.htmlButton);
+                //}
             }
         }
     }
+
 }

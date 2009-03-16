@@ -11,7 +11,6 @@ public class DBEntry implements Comparable {
      * Create a new database entry.
      *
      * @param dbName The database name.
-     * TODO: fix check for database name. The database (H2) restricts database names to be at least 3 characters long
      * @param dbDirname The database directory.
      * @param mp3Dirname The album directory.
      */

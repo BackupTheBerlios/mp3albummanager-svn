@@ -428,18 +428,24 @@ public class AlbumDAO {
     /**
      * Execute an insert, update, or delete query with a prepared statement query.
      * @param prepStmt the PreparedStatement.
+     * @return whether successfully executed query.
      */
-    public void insertValues(PreparedStatement prepStmt) {
+    public boolean insertValues(PreparedStatement prepStmt) {
         
         try {
             if( prepStmt.executeUpdate() == 0) {
                 if(verbose) System.err.println("INSERT FAILED:\n");
+                return false;
+            } else {
+                return true;
             }
+
             //prepStmt.close();
 
         } catch(SQLException se) {
             se.printStackTrace();
         }
+        return false;
     }
 
 }

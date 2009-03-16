@@ -224,14 +224,12 @@ public class Model {
     public void addMp3Files(File dir) {
 
         Mp3Filter filter = new Mp3Filter();
-
         if( dir.isDirectory() ) {
-
             File[] children = dir.listFiles(filter);
             for (File aChildren : children) {
                 addMp3Files( new File( dir, aChildren.getName() ) );
             }
-        } else {
+        } else if ( dir.isFile() ){
             String filename, subdir = "", album;
             // get the filename
             filename = dir.getName();
@@ -326,6 +324,34 @@ public class Model {
         } catch (NumberFormatException nfe) {
             if(verbose) System.out.println("\nFailed to parse genre as a number: " + genrenr);
             return genrenr;
+        }
+    }
+
+    /**
+     * Get the genre number from a genre name.
+     * Return the genre name if it fails.
+     * @param genrename the genre name.
+     * @return the genre number.
+     */
+    public String getGenreNr(String genrename) {
+
+        try {
+            int nr = Integer.parseInt(genrename);
+            if(nr < 0 || nr > 149) {
+                if(verbose) System.out.println("\nFailed to parse genre as a number: " + genrename);
+                return genrename;
+            } else {
+                List<String> genrelist = Arrays.asList(genres);
+                if( genrelist.contains(genrename) ) {
+                    return "" + genrelist.indexOf(genrename);       
+                } else {
+                    return genrename;
+                }
+
+            }
+        } catch (NumberFormatException nfe) {
+            if(verbose) System.out.println("\nFailed to parse genre as a number: " + genrename);
+            return genrename;
         }
     }
 

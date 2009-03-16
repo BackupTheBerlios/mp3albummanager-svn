@@ -171,6 +171,10 @@ public class DetailsPanel extends JPanel implements ItemListener {
 
     public String getModeTextField() { return modeTextField.getText(); }
 
+    public boolean getVarious() { return isVariousRadioButton.isSelected(); }
+
+    public boolean getVbr() { return isVbrRadioButton.isSelected(); }
+
 
     public String getYearComboBox() { return (String) yearComboBox.getSelectedItem(); }
 

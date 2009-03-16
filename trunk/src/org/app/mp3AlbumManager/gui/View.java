@@ -9,7 +9,7 @@ import java.awt.event.ActionListener;
 public class View extends JFrame {
 
     private static final int APP_WIDTH = 1010,
-                             APP_HEIGHT = 510;
+                             APP_HEIGHT = 520;
 
     private JMenuItem menuItemQuit;
     JMenuItem menuItemNew;
