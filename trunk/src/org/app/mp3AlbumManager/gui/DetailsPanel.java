@@ -266,9 +266,9 @@ public class DetailsPanel extends JPanel implements ItemListener {
     }
 
     // LISTENER for comboboxes
-    public void itemStateChanged(ItemEvent ae) {
+    public void itemStateChanged(ItemEvent ie) {
 
-        Object source = ae.getItemSelectable();
+        Object source = ie.getItemSelectable();
 
         if( source == yearComboBox ) {
             yearTextField.setText( getYearComboBox() );

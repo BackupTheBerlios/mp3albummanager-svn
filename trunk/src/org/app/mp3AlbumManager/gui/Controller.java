@@ -22,6 +22,12 @@ import java.util.List;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 
+/**
+ * Controller for the view
+ * Note on queries:
+ * do NOT enclose any question marks with single quotes (query will fail)
+ * TODO: cleanup code - collect similar tasks in methods, try to move db actions to AlbumDAO or Model.
+ */
 public class Controller implements ActionListener {
     /**
      * Constant for the All Albums item in the albums list.
@@ -31,14 +37,15 @@ public class Controller implements ActionListener {
     private final Model model;
     private boolean anyRecent;
     private final boolean verbose;
-    private boolean showingClose, showingNew, showingOpen, showingInfo, showingList, showingDetails;
+    private boolean showingClose, showingNew, showingOpen, showingInfo, showingList, showingDetails, showingSearch;
     private StartupPanel startupPanel;
     private OpenDBPanel openPanel;
     private CreateDBPanel createPanel;
     private InfoDBPanel infoPanel;
     private ListPanel listPanel;
-    private String selectedSongFilename, selectedAlbumDirectory;
+    private String selectedSongFilename, selectedAlbumDirectory, selAlbumTitle;
     private DetailsPanel detailsPanel;
+    private SearchPanel searchPanel;
 
     public int nrOfSongsInDB;
 
@@ -99,7 +106,8 @@ public class Controller implements ActionListener {
                 if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
                 if(showingList) { view.remove(listPanel); showingList = false; }
                 if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
-
+                if(showingSearch) { view.remove(searchPanel); showingSearch = false; }
+                
                 // check for recent db entries
                 setRecent( model.getRecentEntries() );
 
@@ -122,6 +130,7 @@ public class Controller implements ActionListener {
                 if(showingOpen) { view.remove(openPanel); showingOpen = false; }
                 if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
                 if(showingList) { view.remove(listPanel); showingList = false; }
+                if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
 
                 // setup menu items (same as startup + DISABLE new + ENABLE close)
                 view.initializeMenu( false ); // false -> DISABLE open
@@ -146,6 +155,8 @@ public class Controller implements ActionListener {
                 if(showingNew) { view.remove(createPanel); showingNew = false; }
                 if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
                 if(showingList) { view.remove(listPanel); showingList = false; }
+                if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
+                if(showingSearch) { view.remove(searchPanel); showingSearch = false; }
 
                 // setup menu items (same as startup + DISABLE new + ENABLE close
                 view.initializeMenu( false ); // false -> DISABLE open
@@ -176,7 +187,7 @@ public class Controller implements ActionListener {
         } else if( actionCommand.equals("nfo") ) {
 
             // get selected album in listPanel
-            String selAlbumTitle = (String) listPanel.albumList.getSelectedValue();
+            selAlbumTitle = (String) listPanel.albumList.getSelectedValue();
             // get the nfo content
             StringBuffer content = model.getNfoContent(selAlbumTitle);
 
@@ -248,6 +259,27 @@ public class Controller implements ActionListener {
             //      construct the query
             //      execute query
             //      update albums and songs in listPanel
+        } else if( actionCommand.equals("search") ) {
+
+            // remove other panels
+            if(showingClose) { view.remove(startupPanel); showingClose = false; }
+            if(showingNew) { view.remove(createPanel); showingNew = false; }
+            if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
+            if(showingList) { view.remove(listPanel); showingList = false; }
+            if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
+            
+            // hide all other commands (except close)
+            view.initializeMenu( false );
+            view.enableMenuItem(view.menuItemClose);
+            view.enableButton(view.closeButton);
+
+            searchPanel = new SearchPanel(bgcolor);
+
+            searchPanel.showPanel();
+            view.addPanel(searchPanel);
+
+            showingSearch = true;
+
         }
 
     }
@@ -685,7 +717,7 @@ public class Controller implements ActionListener {
 
                     } else {
                         //------ an album is selected --------
-                        String selAlbumTitle = (String) listPanel.albumList.getSelectedValue();
+                        selAlbumTitle = (String) listPanel.albumList.getSelectedValue();
                         if(verbose) System.out.println("\nSelected an album: " + selAlbumTitle);
 
                         // empty all fields in details panel
@@ -938,7 +970,7 @@ public class Controller implements ActionListener {
                 view.enableButton(view.htmlButton);
 
             } else if( actionCommand.equals("updateEdit") ) {
-                //TODO: implement actions for update button
+
                 // read properties from textfields
                 String artist = detailsPanel.getArtistTextField();
                 String bitrateString = detailsPanel.getBitrateTextField();
@@ -951,10 +983,7 @@ public class Controller implements ActionListener {
                 if( freqString != null || freqString.isEmpty() ) {
                     frequency = Integer.parseInt(freqString);
                 }
-                //String genre = model.getGenreNr( detailsPanel.getGenreTextField() );
-                String genre = detailsPanel.getGenreTextField();
-                System.out.println("genre="+genre+" -> null=" + (genre==null) + ", empty=" + (genre.isEmpty()));
-
+                String genre = model.getGenreNr( detailsPanel.getGenreTextField() );
                 String lame = detailsPanel.getLameTextField();
                 String mode = detailsPanel.getModeTextField();
                 String tag = detailsPanel.getTagTextField();
@@ -963,10 +992,6 @@ public class Controller implements ActionListener {
                 Boolean various = detailsPanel.getVarious();
                 Boolean vbr = detailsPanel.getVbr();
                 String year = detailsPanel.getYearTextField();
-
-                //TODO: fix bug when updating an album
-                // fields are not updated after update (they are blank)
-                // when reopen db the fields are updated but the song list is empty!
 
                 // get selected song or album and construct query
                 String updateQuery;
@@ -982,10 +1007,32 @@ public class Controller implements ActionListener {
                     } else {
                         // a single album is selected
                         if(verbose) System.out.println("Edit album: " + selectedAlbumDirectory);
-                        // note: do NOT enclose any question marks with single quotes (query will fail)
-                        updateQuery = "UPDATE Album SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, various=?, vbr=?, albumyear=? " +
-                                "WHERE directory=?";
                         try {
+                            // execute the select song query
+                            // select songs with matching album title
+                            String selectMatchingSongs = "SELECT filename FROM Song WHERE album=?";
+                            prepStmt = model.getDAO().getConnection().prepareStatement(selectMatchingSongs);
+                            prepStmt.setString(1, selAlbumTitle);
+                            ResultSet rs = model.getDAO().executePreparedStmt(prepStmt);
+                            //prepStmt.close();
+                            ArrayList<String> albumSongs = new ArrayList<String>();
+                            while( rs.next() ) { albumSongs.add( rs.getString("filename") ); }
+                            rs.close();
+
+                            String updateMatchingSongs;
+                            PreparedStatement stmt;
+                            for(String filename : albumSongs) {
+                                // update album title for these songs
+                                updateMatchingSongs = "UPDATE Song SET album=? WHERE filename=?";
+                                stmt = model.getDAO().getConnection().prepareStatement(updateMatchingSongs);
+                                stmt.setString(1, title);
+                                stmt.setString(2, filename);
+                                model.getDAO().insertValues(stmt);
+                            }
+                            // query to update album
+                            updateQuery = "UPDATE Album SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, various=?, vbr=?, albumyear=? " +
+                                    "WHERE directory=?";
+                            // execute query to update album
                             prepStmt = model.getDAO().getConnection().prepareStatement(updateQuery);
                             prepStmt.setString(1, artist);
                             prepStmt.setInt(2, bitrate);
@@ -999,7 +1046,6 @@ public class Controller implements ActionListener {
                             prepStmt.setBoolean(10, vbr);
                             prepStmt.setString(11, year);
                             prepStmt.setString(12, selectedAlbumDirectory);
-                            System.out.println( "UPDATE query:\n" + prepStmt.toString() );
                             success = model.getDAO().insertValues(prepStmt);
                             type = "Album";
                             prepStmt.close();
@@ -1007,6 +1053,7 @@ public class Controller implements ActionListener {
                     }
                 } else {
                     // a song is selected
+
                     if(verbose) System.out.println("Edit song: " + selectedSongFilename);
                     updateQuery = "UPDATE Song SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, track=?, vbr=?, songyear=? " +
                             "WHERE filename=?";
@@ -1036,23 +1083,48 @@ public class Controller implements ActionListener {
                 JOptionPane.showMessageDialog(null, msg, "Edit", JOptionPane.INFORMATION_MESSAGE);
 
                 // set fields to not editable and hide the edit buttons (like cancelEdit above)
-                //if(option == 1) {
-                    // make fields editable and show buttons
-                    detailsPanel.setEditableFields(false);
-                    detailsPanel.showEditButtons(false);
-                    detailsPanel.showComboBoxes(false);
-                    // setup menu items (same as startup + DISABLE new + ENABLE close, search, html
-                    view.initializeMenu( false ); // false -> DISABLE open
-                    view.disableMenuItem(view.menuItemNew);
-                    view.disableButton(view.newButton);
+                // make fields editable and show buttons
+                detailsPanel.setEditableFields(false);
+                detailsPanel.showEditButtons(false);
+                detailsPanel.showComboBoxes(false);
 
-                    view.enableMenuItem(view.menuItemClose);
-                    view.enableButton(view.closeButton);
-                    view.enableMenuItem(view.menuItemSearch);
-                    view.enableButton(view.searchButton);
-                    view.enableMenuItem(view.menuItemHTML);
-                    view.enableButton(view.htmlButton);
-                //}
+                // setup menu items (same as startup + DISABLE new + ENABLE close, search, html
+                view.initializeMenu( false ); // false -> DISABLE open
+                view.disableMenuItem(view.menuItemNew);
+                view.disableButton(view.newButton);
+                view.enableMenuItem(view.menuItemClose);
+                view.enableButton(view.closeButton);
+                view.enableMenuItem(view.menuItemSearch);
+                view.enableButton(view.searchButton);
+                view.enableMenuItem(view.menuItemHTML);
+                view.enableButton(view.htmlButton);
+
+                //update albumlist
+                listPanel.albumListModel.removeAllElements();
+                // add "ALL ALBUMS" to the top of the albumlist in the listpanel
+                listPanel.albumListModel.addElement( ALL_ALBUMS_ITEM );
+
+                //CONNECTION -> SELECT QUERIES
+                String albumsQuery = "SELECT title FROM Album ORDER BY title";
+                ResultSet rs = model.getDAO().doSelectQuery(albumsQuery, model.getDAO().getConnection(), false);
+                try {
+                    while(rs.next()) {
+                        listPanel.albumListModel.addElement( rs.getString("title") );
+                    }
+                } catch(SQLException e) { e.printStackTrace(); }
+
+                // update songlist
+                listPanel.songListModel.removeAllElements();
+                String songsQuery = "SELECT title FROM Song ORDER BY title";
+                rs = model.getDAO().doSelectQuery(songsQuery, model.getDAO().getConnection(), false);
+                try {
+                    while(rs.next()) {
+                        listPanel.songListModel.addElement( rs.getString("title") );
+                    }
+                } catch(SQLException e) { e.printStackTrace(); }
+
+
+
             }
         }
     }

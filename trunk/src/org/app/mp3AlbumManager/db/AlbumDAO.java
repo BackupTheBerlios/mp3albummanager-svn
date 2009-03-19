@@ -4,6 +4,11 @@ import java.io.*;
 import java.util.Properties;
 import java.sql.*;
 
+/**
+ * The album Data Access Object class.
+ * Note on queries:
+ * do NOT enclose any question marks with single quotes (query will fail)
+ */
 public class AlbumDAO {
     /**
      * The database driver.
@@ -420,7 +425,11 @@ public class AlbumDAO {
         try {
             return prepStmt.executeQuery();
          } catch(SQLException e) {
-            System.err.println("ERROR: SQLException when executing statement:\n\t" + prepStmt.toString() );
+            e.getMessage();
+            if(verbose)  {
+                System.out.println("ERROR: SQLException message: " + e.getMessage() );
+                System.out.println("       Statement:\n\t" + prepStmt.toString() );
+            }
             return null;
         }
     }
