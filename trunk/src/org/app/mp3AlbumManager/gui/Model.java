@@ -366,6 +366,7 @@ public class Model {
     public StringBuffer getHtmlContent(String musicDir, String searchQuery, String[] albumTitles) {
 
         int nrOfTitles = albumTitles.length;
+
         // generate prepared statements
         // not string queries, to avoid problems with special characters in titles
         String prepSelect = "SELECT directory, artist, title FROM Album WHERE title=?";

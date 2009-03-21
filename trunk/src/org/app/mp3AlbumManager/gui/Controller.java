@@ -224,6 +224,12 @@ public class Controller implements ActionListener {
             // get album list from listPanel
             String[] albums = listPanel.getElementsFromAlbumList();
 
+
+            // remove the ALL ALBUMS item in the album list
+            List<String> albumList = new ArrayList<String>( Arrays.asList(albums) );
+            albumList.removeAll( Arrays.asList(ALL_ALBUMS_ITEM) );
+            albums = albumList.toArray(new String[0]);
+
             // get generated html content
             StringBuffer content = model.getHtmlContent(musicDir, searchQuery, albums);
 
@@ -274,6 +280,7 @@ public class Controller implements ActionListener {
             view.enableButton(view.closeButton);
 
             searchPanel = new SearchPanel(bgcolor);
+            searchPanel.setSearchButtonListener( new SearchPanelListener() );
 
             searchPanel.showPanel();
             view.addPanel(searchPanel);
@@ -1125,6 +1132,28 @@ public class Controller implements ActionListener {
 
 
 
+            }
+        }
+    }
+
+    /**
+     * Listener inner class for searchButton in searchPanel.
+     */
+    private class SearchPanelListener implements ActionListener {
+
+        public void actionPerformed(ActionEvent ae) {
+
+            String actionCommand=ae.getActionCommand();
+
+            if( actionCommand.equals("search") ) {
+                //DEBUG
+                System.out.println( "QUERY : " + searchPanel.getQuery() );
+                System.out.print("VALS  : ");
+                ArrayList<Object> prepVals = searchPanel.getPrepVals();
+                for(int i = 0; i < prepVals.size(); i++) {
+                    System.out.print(i+1 + "=" + prepVals.get(i) + " ");
+                }
+                System.out.println("\n");
             }
         }
     }
