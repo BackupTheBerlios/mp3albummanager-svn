@@ -47,6 +47,8 @@ public class Controller implements ActionListener {
     private DetailsPanel detailsPanel;
     private SearchPanel searchPanel;
 
+    private String currAlbumQuery, currSongQuery;
+
     public int nrOfSongsInDB;
 
     private Task updateTask;
@@ -107,7 +109,7 @@ public class Controller implements ActionListener {
                 if(showingList) { view.remove(listPanel); showingList = false; }
                 if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
                 if(showingSearch) { view.remove(searchPanel); showingSearch = false; }
-                
+
                 // check for recent db entries
                 setRecent( model.getRecentEntries() );
 
@@ -273,7 +275,7 @@ public class Controller implements ActionListener {
             if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
             if(showingList) { view.remove(listPanel); showingList = false; }
             if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
-            
+
             // hide all other commands (except close)
             view.initializeMenu( false );
             view.enableMenuItem(view.menuItemClose);
@@ -503,21 +505,9 @@ public class Controller implements ActionListener {
                 listPanel.albumListModel.addElement( ALL_ALBUMS_ITEM );
 
                 //CONNECTION -> SELECT QUERIES
-                String albumsQuery = "SELECT title FROM Album ORDER BY title";
-                ResultSet rs = model.getDAO().doSelectQuery(albumsQuery, model.getDAO().getConnection(), false);
-                try {
-                    while(rs.next()) {
-                        listPanel.albumListModel.addElement( rs.getString("title") );
-                    }
-                } catch(SQLException e) { e.printStackTrace(); }
-
-                String songsQuery = "SELECT title FROM Song ORDER BY title";
-                rs = model.getDAO().doSelectQuery(songsQuery, model.getDAO().getConnection(), false);
-                try {
-                    while(rs.next()) {
-                        listPanel.songListModel.addElement( rs.getString("title") );
-                    }
-                } catch(SQLException e) { e.printStackTrace(); }
+                currAlbumQuery = "SELECT title FROM Album ORDER BY title";
+                currSongQuery = "SELECT title FROM Song ORDER BY title";
+                model.setListContent(listPanel, currAlbumQuery, currSongQuery);
 
                 listPanel.showPanel();
                 view.addPanel(listPanel, BorderLayout.WEST);
@@ -559,7 +549,7 @@ public class Controller implements ActionListener {
      * Inner class Task is a sub-class of SwingWorker.
      * The task instance invokes the doInBackground in a separate thread.
      */
-    class Task extends SwingWorker<Void, Void> {
+    private class Task extends SwingWorker<Void, Void> {
 
         long startTimeMs;
         /**
@@ -1146,14 +1136,64 @@ public class Controller implements ActionListener {
             String actionCommand=ae.getActionCommand();
 
             if( actionCommand.equals("search") ) {
-                //DEBUG
-                System.out.println( "QUERY : " + searchPanel.getQuery() );
-                System.out.print("VALS  : ");
-                ArrayList<Object> prepVals = searchPanel.getPrepVals();
-                for(int i = 0; i < prepVals.size(); i++) {
-                    System.out.print(i+1 + "=" + prepVals.get(i) + " ");
+                if( searchPanel.doBeforeSearch() ) {
+                    if(verbose) {
+                        System.out.println( "Search query: " + searchPanel.getQuery() );
+                        System.out.print("Search values: ");
+                        ArrayList<Object> prepVals = searchPanel.getPrepVals();
+                        for(int i = 0; i < prepVals.size(); i++) {
+                            System.out.print(i+1 + "=" + prepVals.get(i) + " ");
+                        }
+                        System.out.println("\n");
+                    }
+                    // remove other panels
+                    if(showingClose) { view.remove(startupPanel); showingClose = false; }
+                    if(showingOpen) { view.remove(openPanel); showingOpen = false; }
+                    if(showingNew) { view.remove(createPanel); showingNew = false; }
+                    if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
+                    if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
+                    if(showingList) { view.remove(listPanel); showingList = false; }
+                    if(showingSearch) { view.remove(searchPanel); showingSearch = false; }
+
+                    // setup menu items (same as startup + DISABLE new + ENABLE close, search, html
+                    view.initializeMenu( false ); // false -> DISABLE open
+                    view.disableMenuItem(view.menuItemNew);
+                    view.disableButton(view.newButton);
+
+                    view.enableMenuItem(view.menuItemClose);
+                    view.enableButton(view.closeButton);
+                    view.enableMenuItem(view.menuItemSearch);
+                    view.enableButton(view.searchButton);
+                    view.enableMenuItem(view.menuItemHTML);
+                    view.enableButton(view.htmlButton);
+
+                    // show the listPanel
+                    listPanel = new ListPanel(bgcolor);
+                    listPanel.selectionPanelListener( new ListPanelListener() );
+
+                    // add "ALL ALBUMS" to the top of the albumlist in the listpanel
+                    listPanel.albumListModel.addElement( ALL_ALBUMS_ITEM );
+                    //update the listPanel
+                    // TODO: FIX Search: determine which list (album or song list) to update with search results
+                    DefaultListModel listModel;
+                    listModel = (searchPanel.getCurrentSelect().equals("Album")) ? listPanel.albumListModel : listPanel.songListModel;
+                    model.setListContent(listModel, searchPanel.getQuery(), searchPanel.getPrepVals() );
+
+                    listPanel.showPanel();
+                    view.addPanel(listPanel, BorderLayout.WEST);
+
+                    //add the detailsPanel (fields empty until album or song is selected)
+                    detailsPanel = new DetailsPanel(bgcolor);
+                    detailsPanel.setDetailsButtonListener( new DetailsButtonListener() );
+                    detailsPanel.showPanel();
+                    view.addPanel(detailsPanel, BorderLayout.CENTER);
+                    showingDetails = true;
+                    showingList = true;
+
+                } else {
+                    System.out.println("Some fields are empty, will NOT continue to search results");
                 }
-                System.out.println("\n");
+
             }
         }
     }

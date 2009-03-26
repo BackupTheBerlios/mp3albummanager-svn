@@ -4,6 +4,7 @@ import org.app.mp3AlbumManager.db.DBEntry;
 import org.app.mp3AlbumManager.db.AlbumDAO;
 import org.app.mp3AlbumManager.util.TemplateWriter;
 
+import javax.swing.*;
 import java.util.*;
 import java.io.*;
 import java.sql.Connection;
@@ -343,7 +344,7 @@ public class Model {
             } else {
                 List<String> genrelist = Arrays.asList(genres);
                 if( genrelist.contains(genrename) ) {
-                    return "" + genrelist.indexOf(genrename);       
+                    return "" + genrelist.indexOf(genrename);
                 } else {
                     return genrename;
                 }
@@ -503,7 +504,7 @@ public class Model {
                 if(linelength > maxlength) maxlength = linelength;
                 // store track + (artist) + title in arraylist
                 trackTitlelines.add( tracklist.toString() );
-               // store length in a separate arraylist, to format right alignment
+                // store length in a separate arraylist, to format right alignment
                 lengthlines.add( " (" + getLengthAsString( rs.getInt("songlength") ) + ")\n");
             }
 
@@ -553,6 +554,41 @@ public class Model {
         } catch (Throwable e) { e.printStackTrace(); }
     }
 
+    //############ Panel methods #################
+
+    public void setListContent(ListPanel listPanel, String albumsQuery, String songsQuery) {
+
+        ResultSet rs = getDAO().doSelectQuery(albumsQuery, getDAO().getConnection(), false);
+        try {
+            while(rs.next()) {
+                listPanel.albumListModel.addElement( rs.getString("title") );
+            }
+        } catch(SQLException e) { e.printStackTrace(); }
+
+        rs = getDAO().doSelectQuery(songsQuery, getDAO().getConnection(), false);
+        try {
+            while(rs.next()) {
+                listPanel.songListModel.addElement( rs.getString("title") );
+            }
+        } catch(SQLException e) { e.printStackTrace(); }
+    }
+
+    public void setListContent(DefaultListModel listModel, String selectQuery, ArrayList<Object> vals) {
+
+        PreparedStatement prepStmt;
+        try {
+            prepStmt = getDAO().getConnection().prepareStatement(selectQuery);
+            for(int i = 0; i < vals.size(); i++) {
+                 prepStmt.setObject(i + 1, vals.get(i));
+            }
+            ResultSet rs = getDAO().executePreparedStmt(prepStmt);
+            while(rs.next()) {
+                listModel.addElement( rs.getString("title") );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
 
 //############ Inner classes #################

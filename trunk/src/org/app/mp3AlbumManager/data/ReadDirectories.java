@@ -7,9 +7,9 @@ import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.generic.Utils;
 import org.jaudiotagger.tag.TagException;
 import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.id3.ID3v1Tag;
-import org.jaudiotagger.tag.id3.AbstractID3v2Tag;
-import org.jaudiotagger.tag.id3.ID3v24Frames;
+import org.jaudiotagger.tag.TagFieldKey;
+import org.jaudiotagger.tag.TagField;
+import org.jaudiotagger.tag.id3.*;
 import org.jaudiotagger.tag.id3.valuepair.TextEncoding;
 
 import javax.swing.*;
@@ -140,44 +140,71 @@ public class ReadDirectories {
 
         if(verbose) System.out.println("FILE: " + file);
 
+        final String ID3v23_IDENTIFIER = "ID3v2.30";
+        final String ID3v24_IDENTIFIER = "ID3v2.40";
+        String v2identifier = "";
         boolean foundID3v1 = false, foundID3v2 = false;
-        String track, artist, title, year, genre, tag, lame;
-        String mode;
+        String track, artist, title, year, genre, tag, lame, mode;
         Integer length, bitrate, frequency;
         Boolean vbr;
 
         //----------- get the tag -----------------
         AbstractID3v2Tag v2tag = null;
+        ID3v1Tag v1tag = null;
         try {
-            MP3File  mp3file = new MP3File(file);
+            MP3File mp3file = new MP3File(file);
             MP3AudioHeader audioHeader = mp3file.getMP3AudioHeader();
-            Tag mp3tag = mp3file.getTag();
 
+            //----------- get the tag version -----------------
             tag = "";
-
             if( mp3file.hasID3v1Tag() ) {
-                ID3v1Tag v1tag = (ID3v1Tag) mp3tag;
+                v1tag = mp3file.getID3v1Tag();
                 tag += v1tag.getIdentifier();
                 foundID3v1 = true;
             }
             if( mp3file.hasID3v2Tag() ) {
                 v2tag  = mp3file.getID3v2Tag();
                 if(foundID3v1) tag += ", ";
-                tag += v2tag.getIdentifier();
+                v2identifier = v2tag.getIdentifier();
+                tag += v2identifier;
                 foundID3v2 = true;
             }
-
+            
             //----------- get the tag values -----------------
+            String[] id3v24Frames = { ID3v24Frames.FRAME_ID_TRACK, ID3v24Frames.FRAME_ID_ARTIST,
+                    ID3v24Frames.FRAME_ID_TITLE, ID3v24Frames.FRAME_ID_ALBUM, ID3v24Frames.FRAME_ID_YEAR,
+                    ID3v24Frames.FRAME_ID_GENRE };
+            String[] id3v23Frames = { ID3v23Frames.FRAME_ID_V3_TRACK, ID3v23Frames.FRAME_ID_V3_ARTIST,
+                    ID3v23Frames.FRAME_ID_V3_TITLE, ID3v23Frames.FRAME_ID_V3_ALBUM, ID3v23Frames.FRAME_ID_V3_TYER,
+                    ID3v23Frames.FRAME_ID_V3_GENRE };
+            TagFieldKey[] id3v1Keys = { TagFieldKey.TRACK, TagFieldKey.ARTIST, TagFieldKey.TITLE, 
+                    TagFieldKey.ALBUM, TagFieldKey.YEAR, TagFieldKey.GENRE };
 
-            if(foundID3v2) {
-                track = v2tag.getFirst(ID3v24Frames.FRAME_ID_TRACK);
-                artist = v2tag.getFirst(ID3v24Frames.FRAME_ID_ARTIST);
-                title = v2tag.getFirst(ID3v24Frames.FRAME_ID_TITLE);
-                //album = v2tag.getFirst(ID3v24Frames.FRAME_ID_ALBUM);
-                year = v2tag.getFirst(ID3v24Frames.FRAME_ID_YEAR);
-                genre = v2tag.getFirst(ID3v24Frames.FRAME_ID_GENRE);
+            if( foundID3v2 && v2identifier.equals(ID3v24_IDENTIFIER) ) {
+
+                track = v2tag.getFirst(id3v24Frames[0]);
+                artist = v2tag.getFirst(id3v24Frames[1]);
+                title = v2tag.getFirst(id3v24Frames[2]);
+                //album = v2tag.getFirst(id3v24Frames[3]);
+                year = v2tag.getFirst(id3v24Frames[4]);
+                genre = v2tag.getFirst(id3v24Frames[5]);
+            } else if( foundID3v2 && v2identifier.equals(ID3v23_IDENTIFIER) ) {
+                track = v2tag.getFirst(id3v23Frames[0]);
+                artist = v2tag.getFirst(id3v23Frames[1]);
+                title = v2tag.getFirst(id3v23Frames[2]);
+                //album = v2tag.getFirst(id3v23Frames[3]);
+                year = v2tag.getFirst(id3v23Frames[4]);
+                genre = v2tag.getFirst(id3v23Frames[5]);
+            } else if(foundID3v1) {
+                if(verbose) System.out.println("WARNING: No ID3v2 tag found (using ID3v1 tag):\n\t" + file);
+                track = v1tag.getFirst(id3v1Keys[0]);
+                artist = v1tag.getFirst(id3v1Keys[1]);
+                title = v1tag.getFirst(id3v1Keys[2]);
+                //album = v1tag.getFirst(id3v1Frames[3]);
+                year = v1tag.getFirst(id3v1Keys[4]);
+                genre = v1tag.getFirst(id3v1Keys[5]);
             } else {
-                if(verbose) System.err.println("ERROR: No ID3v2 tag found:\n\t" + file);
+                if(verbose) System.out.println("ERROR: No ID3v2 or ID3v1 tags found (file skipped):\n\t" + file);
                 return;
             }
 

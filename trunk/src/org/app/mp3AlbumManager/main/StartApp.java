@@ -7,6 +7,8 @@ import org.app.mp3AlbumManager.util.HandleProperties;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 /**
  * The starting point for the application.
@@ -30,6 +32,7 @@ public class StartApp {
                             bgColor = handler.getBgColor();
                             verbose = handler.getVerbose();
                         }
+                        setJaudiotaggerLogging(verbose);
                         setTheme(theme);
                         createAndShowGUI(verbose, bgColor);
                     }
@@ -37,8 +40,15 @@ public class StartApp {
         );
     }
 
+    private static void setJaudiotaggerLogging(boolean verbose) {
+        Logger logger = Logger.getLogger("org.jaudiotagger");
+        if( ! verbose) logger.setLevel(Level.OFF);
+    }
+
     private static void setTheme(String theme) {
         try {
+            // override UIManager fg-color for disabled comboboxes (default they are hardly visible)
+            UIManager.put("ComboBox.disabledForeground", Color.darkGray);
             UIManager.setLookAndFeel(theme);
 
         } catch (ClassNotFoundException e) { System.err.println("Error setting theme: ClassNotFoundException");

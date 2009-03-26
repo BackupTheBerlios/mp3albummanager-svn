@@ -383,7 +383,7 @@ public class AlbumDAO {
                         "   albumlength INTEGER, " +
                         "   albumyear   VARCHAR(4), " +
                         "   genre       VARCHAR(32), " +
-                        "   tag         VARCHAR(16), " +
+                        "   tag         VARCHAR(24), " +
                         "   lame        VARCHAR(16), " +
                         "   bitrate     INTEGER, " +
                         "   vbr         BOOLEAN, " +
@@ -401,7 +401,7 @@ public class AlbumDAO {
                         "   songlength  INTEGER, " +
                         "   songyear    VARCHAR(4), " +
                         "   genre       VARCHAR(32), " +
-                        "   tag         VARCHAR(16), " +
+                        "   tag         VARCHAR(24), " +
                         "   lame        varchar(16),  " +
                         "   bitrate     INTEGER, " +
                         "   vbr         BOOLEAN, " +
