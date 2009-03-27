@@ -377,8 +377,8 @@ public class AlbumDAO {
                         "   directory   VARCHAR(256) PRIMARY KEY," +
                         "   subdirs     VARCHAR(256), " +
                         "   tracks      INTEGER, " +
-                        "   artist      VARCHAR(64), " +
-                        "   title       VARCHAR(128), " +
+                        "   artist      VARCHAR_IGNORECASE(64), " +
+                        "   title       VARCHAR_IGNORECASE(128), " +
                         "   various     BOOLEAN, " +
                         "   albumlength INTEGER, " +
                         "   albumyear   VARCHAR(4), " +
@@ -393,11 +393,11 @@ public class AlbumDAO {
         String strCreateSongTable =
                 "CREATE TABLE IF NOT EXISTS Song (" +
                         "   filename    varchar(256) PRIMARY KEY, " +
-                        "   album      varchar(128), " +
+                        "   album      varchar_IGNORECASE(128), " +
                         "   subdir      varchar(128), " +
                         "   track       VARCHAR(8), " +
-                        "   artist      VARCHAR(64), " +
-                        "   title       VARCHAR(128), " +
+                        "   artist      VARCHAR_IGNORECASE(64), " +
+                        "   title       VARCHAR_IGNORECASE(128), " +
                         "   songlength  INTEGER, " +
                         "   songyear    VARCHAR(4), " +
                         "   genre       VARCHAR(32), " +

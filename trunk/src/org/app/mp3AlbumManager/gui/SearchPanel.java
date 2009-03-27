@@ -9,9 +9,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.IOException;
 
 
 public class SearchPanel extends JPanel implements ActionListener {
@@ -33,7 +30,6 @@ public class SearchPanel extends JPanel implements ActionListener {
 
     // constant field names
     private static final String SELECT_ALBUM_NAME = "Album";
-    private static final String SELECT_EMPTY_NAME = "";
     private static final String PROP_LENGTH_NAME = "Length";
     private static final String PROP_YEAR_NAME = "Year";
     private static final String PROP_SONG_NAME = "Song";
@@ -139,6 +135,8 @@ public class SearchPanel extends JPanel implements ActionListener {
     private String query;
     private ArrayList<Object> prepValue;
 
+    private String humanReadableSearch;
+
     private Color bgcolor;
 
     public SearchPanel(Color color) {
@@ -147,6 +145,7 @@ public class SearchPanel extends JPanel implements ActionListener {
 
         query = "";
         prepValue = new ArrayList<Object>();
+        humanReadableSearch = "";
 
         selectMap = new LinkedHashMap<String, String>();
         for(int i = 0; i < SELECT_LENGTH; i++) { selectMap.put( selectKeys[i], selectVals[i] ); }
@@ -250,6 +249,12 @@ public class SearchPanel extends JPanel implements ActionListener {
 
     public String getCurrentSelect() { return currSelect; }
 
+    public String getHumanReadableSearch() { return humanReadableSearch; }
+
+    public void setHumanReadableSearch(String search) { humanReadableSearch = search; }
+
+    public void addToHumanReadableSearch(String search) { humanReadableSearch += search; }
+
     public boolean doBeforeSearch() {
 
         resetPrepVals();
@@ -263,20 +268,22 @@ public class SearchPanel extends JPanel implements ActionListener {
         }
         setQuery(query);
         currSelect = select;
+        String humanSearch = ( currSelect.equals(SELECT_ALBUM_NAME) ) ? "Search albums where" : "Search songs where";
+        setHumanReadableSearch(humanSearch);
         // get the property
         prop = getCbItem(propCB);
         for( Map.Entry<String, String> entry: currPropMap.entrySet() ) {
             if( prop.equals( entry.getKey() ) ) query = entry.getValue();
         }
         addToQuery(query);
-
+        addToHumanReadableSearch(" " + prop);
         // get the operator
         oper = getCbItem(opCB);
         for( Map.Entry<String, String> entry: currOpMap.entrySet() ) {
             if( oper.equals( entry.getKey() ) ) query = entry.getValue();
         }
         addToQuery(query);
-
+        addToHumanReadableSearch(" " + oper);
         // check for empty query & value
         if( getQuery().isEmpty() | getCbItem(valCB).isEmpty() ) {
             setMessage(false);
@@ -286,11 +293,12 @@ public class SearchPanel extends JPanel implements ActionListener {
         // get the value
         if( oper.equals(OP_CONTAINS_NAME) | select.equals(OP_CONTAINSNOT_NAME) ) {
             // add wildcards to prepvalue
-            val = getCbItem(valCB) + "%";
+            val = "%" + getCbItem(valCB) + "%";
         } else {
             val = getCbItem(valCB);
         }
         addToPrepVals(val);
+        addToHumanReadableSearch(" " + val);
         return true;
     }
 

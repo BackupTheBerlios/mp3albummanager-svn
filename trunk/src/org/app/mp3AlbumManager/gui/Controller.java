@@ -33,6 +33,8 @@ public class Controller implements ActionListener {
      * Constant for the All Albums item in the albums list.
      */
     private static final String ALL_ALBUMS_ITEM = "-> ALL Albums";
+    private static final String SEARCH_RESULTS_ITEM = "-> SEARCH Results";
+    private boolean searchForSongs;
     private final View view;
     private final Model model;
     private boolean anyRecent;
@@ -47,7 +49,8 @@ public class Controller implements ActionListener {
     private DetailsPanel detailsPanel;
     private SearchPanel searchPanel;
 
-    private String currAlbumQuery, currSongQuery;
+    private String currAlbumQuery, currSongQuery, currSearchQuery;
+    private ArrayList<Object> currPrepVals;
 
     public int nrOfSongsInDB;
 
@@ -702,6 +705,7 @@ public class Controller implements ActionListener {
 
             if ( !e.getValueIsAdjusting() ) {
 
+                listPanel.setMessageLabel("");
                 int selectedIndex;
                 JList list = (JList) e.getSource();
 
@@ -720,9 +724,9 @@ public class Controller implements ActionListener {
                         // empty all fields in details panel
                         detailsPanel.resetAllFields();
 
-                        //------ ALL ALBUMS is selected --------
+                        //------ ALL ALBUMS or SEARCH RESULTS is selected --------
 
-                        if( selAlbumTitle.equals(ALL_ALBUMS_ITEM) ) {
+                        if( selAlbumTitle.equals(ALL_ALBUMS_ITEM) | selAlbumTitle.equals(SEARCH_RESULTS_ITEM) ) {
                             // disable edit, delete, NFO in menu
                             view.disableMenuItem(view.menuItemEdit);
                             view.disableButton(view.editButton);
@@ -731,19 +735,32 @@ public class Controller implements ActionListener {
                             view.disableMenuItem(view.menuItemNFO);
                             view.disableButton(view.nfoButton);
 
-                            // empty the songlist
+                            // empty the lists
                             listPanel.songListModel.removeAllElements();
-                            // show all songs in the songlist
-                            String songsQuery = "SELECT * FROM Song ORDER BY title";
-                            ResultSet rs = model.getDAO().doSelectQuery(songsQuery, model.getDAO().getConnection(), false);
-                            try {
-                                while(rs.next()) {
-                                    listPanel.songListModel.addElement( rs.getString("title") );
-                                }
-                            } catch(SQLException e1) { e1.printStackTrace(); }
+                            listPanel.albumListModel.removeAllElements();
+                            // add "ALL ALBUMS" & "SEARCH RESULTS" to the top of the albumlist in the listpanel
+                            listPanel.albumListModel.addElement( ALL_ALBUMS_ITEM );
+                            if(currSearchQuery != null) listPanel.albumListModel.addElement( SEARCH_RESULTS_ITEM );
 
+                            //------ SEARCH RESULTS is selected --------
+                            if( selAlbumTitle.equals(SEARCH_RESULTS_ITEM) ) {
+
+                                DefaultListModel listModel = (searchForSongs) ? listPanel.songListModel : listPanel.albumListModel;
+                                Set albumList = model.setListContent(listModel, currSearchQuery, currPrepVals, searchForSongs);
+                                if(searchForSongs) {
+                                    for(Object o: albumList) listPanel.albumListModel.addElement(o);
+                                }
+                                listPanel.setMessageLabel( searchPanel.getHumanReadableSearch() );
+                            } else {
+                                // show all albums & songs in lists
+                                String albumsQuery = "SELECT * FROM Album ORDER BY title";
+                                String songsQuery = "SELECT * FROM Song ORDER BY title";
+                                model.setListContent(listPanel, albumsQuery, songsQuery);
+                            }
                             return;
+
                         }
+
 
                         //------ an single album is selected --------
 
@@ -1136,6 +1153,7 @@ public class Controller implements ActionListener {
             String actionCommand=ae.getActionCommand();
 
             if( actionCommand.equals("search") ) {
+                searchForSongs = false;
                 if( searchPanel.doBeforeSearch() ) {
                     if(verbose) {
                         System.out.println( "Search query: " + searchPanel.getQuery() );
@@ -1171,14 +1189,22 @@ public class Controller implements ActionListener {
                     listPanel = new ListPanel(bgcolor);
                     listPanel.selectionPanelListener( new ListPanelListener() );
 
-                    // add "ALL ALBUMS" to the top of the albumlist in the listpanel
+                    // add "ALL ALBUMS" & "SEARCH RESULTS" to the top of the albumlist in the listpanel
                     listPanel.albumListModel.addElement( ALL_ALBUMS_ITEM );
-                    //update the listPanel
-                    // TODO: FIX Search: determine which list (album or song list) to update with search results
-                    DefaultListModel listModel;
-                    listModel = (searchPanel.getCurrentSelect().equals("Album")) ? listPanel.albumListModel : listPanel.songListModel;
-                    model.setListContent(listModel, searchPanel.getQuery(), searchPanel.getPrepVals() );
+                    listPanel.albumListModel.addElement( SEARCH_RESULTS_ITEM );
 
+                    //update the listPanel
+                    DefaultListModel listModel;
+                    searchForSongs = searchPanel.getCurrentSelect().equals("Song");
+                    listModel = (searchForSongs) ? listPanel.songListModel : listPanel.albumListModel;
+                    currSearchQuery = searchPanel.getQuery();
+                    currPrepVals = searchPanel.getPrepVals();
+                    Set albumList = model.setListContent(listModel, currSearchQuery, currPrepVals, searchForSongs);
+                    if(searchForSongs) {
+                        for(Object o: albumList) listPanel.albumListModel.addElement(o);
+                    }
+                    listPanel.setMessageLabel( searchPanel.getHumanReadableSearch() );
+                    // show the listPanel
                     listPanel.showPanel();
                     view.addPanel(listPanel, BorderLayout.WEST);
 

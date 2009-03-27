@@ -362,6 +362,7 @@ public class Model {
      * @param musicDir The album directory.
      * @param searchQuery The search query (if any).
      * @param queries The queries to the database, to get the replace patterns to generate the nfo content.
+     * @param albumTitles The album titles.
      * @return The html content.
      */
     public StringBuffer getHtmlContent(String musicDir, String searchQuery, String[] albumTitles) {
@@ -573,8 +574,10 @@ public class Model {
         } catch(SQLException e) { e.printStackTrace(); }
     }
 
-    public void setListContent(DefaultListModel listModel, String selectQuery, ArrayList<Object> vals) {
+    public Set setListContent(DefaultListModel listModel, String selectQuery, ArrayList<Object> vals, boolean getSonglist) {
 
+        ArrayList<String> results = new ArrayList<String>();
+        Set<String> ret = new HashSet<String>();
         PreparedStatement prepStmt;
         try {
             prepStmt = getDAO().getConnection().prepareStatement(selectQuery);
@@ -582,12 +585,18 @@ public class Model {
                  prepStmt.setObject(i + 1, vals.get(i));
             }
             ResultSet rs = getDAO().executePreparedStmt(prepStmt);
+            int rows = 0;
             while(rs.next()) {
-                listModel.addElement( rs.getString("title") );
+                results.add( rs.getString("title") );
+                if(getSonglist) ret.add( rs.getString("album") );
+                rows++;
             }
+            Collections.sort(results);
+            for(String s: results) listModel.addElement(s);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return ret;
     }
 }
 

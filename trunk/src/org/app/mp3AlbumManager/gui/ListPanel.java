@@ -12,6 +12,8 @@ public class ListPanel extends JPanel {
 
     public static final String ID_ALBUMLIST = "albumList";  //javax.swing.JList
     public static final String ID_SONGLIST = "songList";  //javax.swing.JList
+    public static final String ID_MESSAGELABEL = "messageLabel";  //com.jeta.forms.components.label.JETALabel
+
 
     // the form panel
     private FormPanel listPanel;
@@ -21,6 +23,7 @@ public class ListPanel extends JPanel {
     JList songList;
     DefaultListModel albumListModel;
     DefaultListModel songListModel;
+    private JLabel messageLabel;
 
     private Color bgcolor;
 
@@ -55,6 +58,9 @@ public class ListPanel extends JPanel {
         songListModel = new DefaultListModel();
         songList.setModel(songListModel);  // Why use a listmodel?
 
+        //---- messageLabel ----
+        messageLabel = listPanel.getLabel(ID_MESSAGELABEL);
+
         //LAYOUT
         setLayout( new BorderLayout() );
         add( listPanel, BorderLayout.CENTER );
@@ -72,6 +78,8 @@ public class ListPanel extends JPanel {
         super.repaint();
     }
 
+    public void setMessageLabel(String text) { messageLabel.setText(text); }
+    
     public void selectionPanelListener(ListSelectionListener lsl) {
         albumList.addListSelectionListener(lsl);
         songList.addListSelectionListener(lsl);
