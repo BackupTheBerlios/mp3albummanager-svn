@@ -4,27 +4,21 @@ import org.app.mp3AlbumManager.util.FileTraversal;
 import org.jaudiotagger.audio.mp3.*;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
 import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.generic.Utils;
 import org.jaudiotagger.tag.TagException;
-import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.TagFieldKey;
-import org.jaudiotagger.tag.TagField;
 import org.jaudiotagger.tag.id3.*;
-import org.jaudiotagger.tag.id3.valuepair.TextEncoding;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.nio.channels.FileChannel;
-import java.nio.ByteBuffer;
+
 
 public class ReadDirectories {
 
     private boolean verbose;
     private final String path;
     private String albumArtist, albumTitle, albumYear;
-    private Boolean variousAlbum;
+    //private Boolean variousAlbum;
     private String subdir = "";
 
     private Song song;

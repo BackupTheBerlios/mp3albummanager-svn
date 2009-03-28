@@ -31,6 +31,8 @@ public class View extends JFrame {
     JButton nfoButton;
     JButton htmlButton;
 
+    JTextArea nfoContent;
+
     public View() {
 
         initComponents();
@@ -66,6 +68,8 @@ public class View extends JFrame {
         deleteButton = new JButton();
         nfoButton = new JButton();
         htmlButton = new JButton();
+
+        nfoContent = new JTextArea();
 
         //======== this ========
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -329,13 +333,22 @@ public class View extends JFrame {
      * @return The JTextArea component.
      */
     public JTextArea setTextAreaContent(String content) {
-        JTextArea nfoContent = new JTextArea();
         nfoContent.setText(content);
         nfoContent.setBackground(Color.black);
         nfoContent.setForeground(Color.white);
         nfoContent.setFont(new Font(Font.MONOSPACED, Font.BOLD, 12) );
         nfoContent.setMargin(new Insets(5, 5, 5, 5));
         return nfoContent;
+    }
+
+    /**
+     * Get the text of the JTextArea.
+     * @return the text of the JTextArea as a StringBuffer.
+     */
+    public StringBuffer getTextAreaContent() {
+        StringBuffer buf = new StringBuffer();
+        buf.append( nfoContent.getText() );
+        return buf;   
     }
 
     /**

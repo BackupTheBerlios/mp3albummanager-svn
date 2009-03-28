@@ -49,11 +49,11 @@ public class SearchPanel extends JPanel implements ActionListener {
     private static final String OP_IS_NAME = "is";
     private static final String OP_ISNOT_NAME = "is not";
     private static final String OP_CONTAINS_NAME = "contains";
-    private static final String OP_CONTAINSNOT_NAME = "does not contain";
+    private static final String OP_NOTCONTAINS_NAME = "does not contain";
     private static final String OP_MORE_NAME = "is more than";
     private static final String OP_LESS_NAME = "is less than";
-    private static final String OP_HAS_NAME = "has one";
-    private static final String OP_HASNOT_NAME = "none";
+    private static final String OP_NOTEMPTY_NAME = "is not empty";
+    private static final String OP_EMPTY_NAME = "is empty";
 
     // select fields
     private static final String SELECT_PROTO_VALUE = SELECT_ALBUM_NAME;
@@ -79,11 +79,10 @@ public class SearchPanel extends JPanel implements ActionListener {
             "songlength", "frequency", "tag", "title", "track", "vbr", "songyear" };
 
     // operator fields
-    private static final String OP_PROTO_VALUE = OP_CONTAINSNOT_NAME;
+    private static final String OP_PROTO_VALUE = OP_NOTCONTAINS_NAME;
     private Map<String, String> stringOpMap;
     private static final int STR_OP_LENGTH = 4;
-    private String[] stringOpKeys = { OP_CONTAINS_NAME, OP_CONTAINSNOT_NAME, OP_IS_NAME, OP_ISNOT_NAME };
-    // ADD WILDCARDS TO PREPVAL '%val%' FOR LIKE/NOT LIKE
+    private String[] stringOpKeys = { OP_CONTAINS_NAME, OP_NOTCONTAINS_NAME, OP_IS_NAME, OP_ISNOT_NAME };
     private String[] stringOpVals = { " LIKE ?", " NOT LIKE ?",  " = ?", " != ?" };
     private Map<String, String> intOpMap;
     private static final int INT_OP_LENGTH = 4;
@@ -91,20 +90,19 @@ public class SearchPanel extends JPanel implements ActionListener {
     private String[] intOpVals = { " = ?", " != ?", " > ?", " < ?" };
     private Map<String, String> enumOpMap;
     private static final int ENUM_OP_LENGTH = 4;
-    private String[] enumOpKeys = { OP_IS_NAME, OP_ISNOT_NAME, OP_HASNOT_NAME, OP_HAS_NAME };
-    // <--SET PREPVAL TO 'null' FOR none/has one
+    private String[] enumOpKeys = { OP_IS_NAME, OP_ISNOT_NAME, OP_EMPTY_NAME, OP_NOTEMPTY_NAME};
     private String[] enumOpVals = { " = ?", " != ?", " = ?", " != ?" };
     private Map<String, String> boolOpMap;
     private static final int BOOL_OP_LENGTH = 2;
     private String[] boolOpKeys = { OP_IS_NAME, OP_ISNOT_NAME };
-    private String[] boolOpVals = { " = ?", " != ?" };  // <--SET PREPVAL TO 'true'
+    private String[] boolOpVals = { " = ?", " != ?" };
 
     // value fields
     private static final String VAL_PROTO_VALUE = "Contemporary Christian";
     private String[] stringVals = { "" };
     private Integer[] intVals = { 0 };
     private Boolean[] boolVals = { true };
-    private String[] existsVals = { "null" };
+    private String[] existsVals = { "NULL" };
     private Integer[] bitrateVals = { 320, 256, 244, 192, 160, 128 };
     private Integer[] freqVals = { 48000, 44100, 32000 };
     private String[] lameVals = { "LAME3.98", "LAME3.97", "LAME3.96", "LAME3.95", "LAME3.93", "LAME3.92", "LAME3.91", "LAME3.90" };
@@ -291,7 +289,7 @@ public class SearchPanel extends JPanel implements ActionListener {
         }
 
         // get the value
-        if( oper.equals(OP_CONTAINS_NAME) | select.equals(OP_CONTAINSNOT_NAME) ) {
+        if( oper.equals(OP_CONTAINS_NAME) | select.equals(OP_NOTCONTAINS_NAME) ) {
             // add wildcards to prepvalue
             val = "%" + getCbItem(valCB) + "%";
         } else {
@@ -345,7 +343,7 @@ public class SearchPanel extends JPanel implements ActionListener {
             }
         } else if(cb == opCB) {
             select = getCbItem(opCB);
-            if( select.equals(OP_HAS_NAME) | select.equals(OP_HASNOT_NAME) ) {
+            if( select.equals(OP_NOTEMPTY_NAME) | select.equals(OP_EMPTY_NAME) ) {
                 setValCb(existsVals, false);
             }
         }

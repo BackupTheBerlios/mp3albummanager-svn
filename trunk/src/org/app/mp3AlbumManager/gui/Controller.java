@@ -210,7 +210,9 @@ public class Controller implements ActionListener {
                 // save the content in the selected nfo file
                 FileBrowser browse = new FileBrowser(JFileChooser.SAVE_DIALOG, JFileChooser.FILES_ONLY);
                 String saveNfo = browse.getTarget();
-                if(saveNfo != null) model.writeFile(content, saveNfo);
+                //TODO: NFO content should be fetched from preview
+                //if(saveNfo != null) model.writeFile(content, saveNfo);
+                if(saveNfo != null) model.writeFile(view.getTextAreaContent(), saveNfo);
             }
 
         } else if( actionCommand.equals("html") ) {
