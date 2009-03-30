@@ -29,6 +29,10 @@ import java.beans.PropertyChangeEvent;
  * TODO: cleanup code - collect similar tasks in methods, try to move db actions to AlbumDAO or Model.
  */
 public class Controller implements ActionListener {
+
+    private static final String APP_NAME = "Mp3AlbumManager";
+    private static final String APP_VERSION = "alpha-02";
+    private static final String APP_URL = "http://www.sb.bostream.se/lgh7339701/projects/mp3albummanager.html";
     /**
      * Constant for the All Albums item in the albums list.
      */
@@ -48,6 +52,7 @@ public class Controller implements ActionListener {
     private String selectedSongFilename, selectedAlbumDirectory, selAlbumTitle;
     private DetailsPanel detailsPanel;
     private SearchPanel searchPanel;
+    private AboutPanel aboutPanel;
 
     private String currAlbumQuery, currSongQuery, currSearchQuery;
     private ArrayList<Object> currPrepVals;
@@ -249,7 +254,7 @@ public class Controller implements ActionListener {
                 if(saveHTML != null) {
                     model.writeFile(content, saveHTML);
                     LaunchBrowser browser = new LaunchBrowser(saveHTML);
-                    browser.launch();
+                    browser.launchFile();
                 }
             }
 
@@ -294,6 +299,10 @@ public class Controller implements ActionListener {
 
             showingSearch = true;
 
+        } else if( actionCommand.equals("about") ) {
+            if(verbose) System.out.println("ABOUT:\n\t" + APP_NAME + " " + APP_VERSION + "\n\t" + APP_URL);
+            aboutPanel = new AboutPanel(bgcolor, APP_NAME, APP_VERSION, APP_URL);
+            JOptionPane.showMessageDialog(null, aboutPanel, "About", JOptionPane.PLAIN_MESSAGE);
         }
 
     }
@@ -368,12 +377,14 @@ public class Controller implements ActionListener {
                 model.setDAO(doCreate);
                 if( model.initDB() ) {
                     model.getDAO().createTables( model.getDAO().connect(user, pass) );
+                    // continue to database infoPanel
+                    showDBInfoPanel(mp3Dir);
                 } else {
-                    System.err.println("ERROR: initialising db directory"); //DEBUG
+                    if(verbose) System.err.println("ERROR: initialising db directory");
+                    createPanel.setMessageLabel("Collection already exists!");
                 }
 
-                // continue to database infoPanel
-                showDBInfoPanel(mp3Dir);
+
 
                 // actions for browse buttons in createPanel
             } else if( actionCommand.equals("browseMP3dir") ) {
@@ -532,6 +543,59 @@ public class Controller implements ActionListener {
                 updateTask.addPropertyChangeListener(this);
                 updateTask.execute();
 
+            } else if( actionCommand.equals("remove") ) {
+                // show confirmation dialog
+                int option = JOptionPane.showConfirmDialog(null, "Are you sure you want to remove this collection?", "Remove collection?", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                if(option == 0) {
+                    // remove the line in the recent file
+                    String dbDir = model.getCurrentEntry().getDBDir();
+                    String dbName = model.getCurrentEntry().getDBName();
+                    String path = dbDir + "/." + dbName;
+                    File recent = model.getRecentFile();
+                    if(verbose) System.out.println("Checking path:\n\t" + path);
+                    boolean found = model.getDAO().foundInRecent(recent, path);
+                    if(found) {
+                        model.getDAO().removeFromRecent(recent.getAbsolutePath(), path);
+                        // log out
+                        model.getDAO().disconnect();
+                        // remove the directory
+                        boolean deleted = model.deleteDir( new File(path) );
+                        if(deleted) {
+                            // show dialog? (collection removed successfully)
+                            JOptionPane.showMessageDialog(null, "Collection removed successfully.");
+                            // remove the db entry and set current entry to empty string
+                            model.removeEntry(dbName);
+                            model.setCurrentEntry("");
+                        } else {
+                            if(verbose) System.out.println("Error: Failed to delete dir:\n\t" + path);
+                        }
+
+                    } else {
+                        if(verbose) System.out.println("Error: Collection path not found:\n\t" + path);
+                    }
+                    // go back to startup (whether successfully removed collection or not)
+                    //TODO: move this to separate method (is exactly the same as 'close'
+                    // remove other panels
+                    if(showingOpen) { view.remove(openPanel); showingOpen = false; }
+                    if(showingNew) { view.remove(createPanel); showingNew = false; }
+                    if(showingInfo) { view.remove(infoPanel); showingInfo = false; }
+                    if(showingList) { view.remove(listPanel); showingList = false; }
+                    if(showingDetails) { view.remove(detailsPanel); showingDetails = false; }
+                    if(showingSearch) { view.remove(searchPanel); showingSearch = false; }
+
+                    // check for recent db entries
+                    setRecent( model.getRecentEntries() );
+
+                    //setup menu items (same as startup + ENABLE new)
+                    view.initializeMenu( getRecent() );
+                    view.enableMenuItem(view.menuItemNew);
+                    view.enableButton(view.newButton);
+
+                    // show the empty startup panel
+                    startupPanel = new StartupPanel(bgcolor);
+                    view.addPanel(startupPanel);
+                    showingClose = true;
+                }
             }
         }
 

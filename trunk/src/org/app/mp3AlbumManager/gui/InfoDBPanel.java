@@ -12,6 +12,7 @@ public class InfoDBPanel extends JPanel {
     public static final String ID_DBLABEL = "dbLabel";  //com.jeta.forms.components.label.JETALabel
     public static final String ID_NEXTBUTTON = "nextButton";  //javax.swing.JButton
     public static final String ID_UPDATEBUTTON = "updateButton";  //javax.swing.JButton
+    public static final String ID_REMOVEBUTTON = "removeButton";  //javax.swing.JButton
     public static final String ID_PROGRESSBAR = "progressbar";  //javax.swing.JProgressBar
 
     // the form panel
@@ -20,8 +21,7 @@ public class InfoDBPanel extends JPanel {
     // panel components
     private JLabel musicLabel;
     private JLabel dbLabel;
-    AbstractButton nextButton;
-    AbstractButton updateButton;
+    AbstractButton nextButton, updateButton, removeButton;
     public JProgressBar progressBar;
 
     private final String dbLabelText;
@@ -49,6 +49,7 @@ public class InfoDBPanel extends JPanel {
         musicLabel = infoPanel.getLabel(ID_MUSICLABEL);
         updateButton = infoPanel.getButton(ID_UPDATEBUTTON);
         nextButton = infoPanel.getButton(ID_NEXTBUTTON);
+        removeButton = infoPanel.getButton(ID_REMOVEBUTTON);
         progressBar = infoPanel.getProgressBar(ID_PROGRESSBAR);
 
         //======== this ========
@@ -80,6 +81,8 @@ public class InfoDBPanel extends JPanel {
         nextButton.setActionCommand("next");
         updateButton.addActionListener(al);
         updateButton.setActionCommand("update");
+        removeButton.addActionListener(al);
+        removeButton.setActionCommand("remove");
     }
 
     /**

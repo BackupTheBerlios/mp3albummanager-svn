@@ -173,22 +173,18 @@ public class AlbumDAO {
             props.store( new FileWriter(propFile), null );
             if(verbose) System.out.println("Writing properties to file:\n\t" + propFile);
 
-            // write the database path to a recent file in application directory
+            // write the database path to the recent file in application directory
             File appDir = new File( System.getProperty("user.home") + "/.mp3MusicManager" ); // the application directory
             File recentFile = new File( appDir + "/recent"); // the recent file
+            String path = dbDir + "/." + dbName; // the path
             // make the directory
             if( appDir.mkdir() ) { if(verbose) System.out.println("Creating application directory:\n\t" + appDir); }
-            // if the path is not already written to the recent file
-            if( ! foundInRecent(recentFile, dbDir) ) {
-                // append the path to the recent file
-                bw = new BufferedWriter( new FileWriter(recentFile, true) );
-                bw.write(dbDir + "/." + dbName);
-                bw.newLine();
-                bw.flush();
-                if(verbose) System.out.println("Appending path to recent file:\n\t" + recentFile);
-            } else {
-                if(verbose) System.out.println("Path already exists in recent file:\n\t" + recentFile);
-            }
+            // append the path to the recent file
+            bw = new BufferedWriter( new FileWriter(recentFile, true) );
+            bw.write(path);
+            bw.newLine();
+            bw.flush();
+            if(verbose) System.out.println("Appending path:\n\t" + dbDir + "/." + dbName + "\nTo recent file:\n\t" + recentFile);
 
         } catch (IOException e) {
             System.err.println("Error: IOException when writing properties to file\n" + propFile + "\n");
@@ -202,18 +198,17 @@ public class AlbumDAO {
     }
 
     /**
-     * Check if path is found in the recent file.
-     * TODO: this check supposes database directory is unique for each db entry
+     * Check if path is found in the recent file. Used when removing a collection.
      * @param recentFile The recent file.
      * @param path The path.
      * @return Whether path was found in recent file.
      */
-    private boolean foundInRecent(File recentFile, String path) {
+    public boolean foundInRecent(File recentFile, String path) {
 
         boolean ret = false;
         String row;
         try {
-            if(verbose) System.out.println("Checking for path in recent file:\n\t" + recentFile);
+            if(verbose) System.out.println("Checking recent file:\n\t" + recentFile + "\nFor path:\n\t" + path);
             FileReader fr = new FileReader(recentFile);
             BufferedReader br = new BufferedReader(fr);
             // if file is empty
@@ -228,10 +223,57 @@ public class AlbumDAO {
                 }
 
             }
-            
+
         } catch(IOException e) { e.printStackTrace(); }
 
         return ret;
+    }
+
+    /**
+     * Remove an entry (a line) from the recent file.
+     * @param recentFile the recent file.
+     * @param lineToRemove the entry (line) to remove.
+     */
+    public void removeFromRecent(String recentFile, String lineToRemove) {
+
+        try {
+            File inFile = new File(recentFile);
+            // is this check necessary?
+            if (!inFile.isFile()) {
+                if(verbose) System.out.println("Recent file not found:\n\t" + recentFile);
+                return;
+            }
+
+            //Construct the new file that will later be renamed to the original filename.
+            File tempFile = new File(inFile.getAbsolutePath() + ".tmp");
+
+            BufferedReader br = new BufferedReader(new FileReader(recentFile));
+            PrintWriter pw = new PrintWriter(new FileWriter(tempFile));
+
+            String line;
+            //Read from the original file and write to the new, unless content matches data to be removed.
+            while( (line = br.readLine() ) != null) {
+
+                if ( ! line.trim().equals(lineToRemove) ) {
+                    pw.println(line);
+                    pw.flush();
+                }
+            }
+            pw.close();
+            br.close();
+
+            //Delete the original file
+            if ( ! inFile.delete() ) {
+                System.out.println("Could not delete recent file:\n\t" + recentFile);
+                return;
+            }
+
+            //Rename the new file to the filename the original file had.
+            if ( ! tempFile.renameTo(inFile) ) {System.out.println("Could not rename recent file:\n\t" + recentFile); }
+
+        } catch (FileNotFoundException fnfe) { fnfe.printStackTrace();
+        } catch (IOException ioe) { ioe.printStackTrace();
+        }
     }
 
     /**
@@ -424,7 +466,7 @@ public class AlbumDAO {
     public ResultSet executePreparedStmt(PreparedStatement prepStmt) {
         try {
             return prepStmt.executeQuery();
-         } catch(SQLException e) {
+        } catch(SQLException e) {
             e.getMessage();
             if(verbose)  {
                 System.out.println("ERROR: SQLException message: " + e.getMessage() );
@@ -440,7 +482,7 @@ public class AlbumDAO {
      * @return whether successfully executed query.
      */
     public boolean insertValues(PreparedStatement prepStmt) {
-        
+
         try {
             if( prepStmt.executeUpdate() == 0) {
                 if(verbose) System.err.println("INSERT FAILED:\n");

@@ -108,8 +108,8 @@ public class Model {
                 mp3dir = props.getProperty("mp3.dir");
                 entry = new DBEntry(db, dir, mp3dir);
                 addNewEntry(entry);
-                //if we-ve come this far we can set return value to true, ie found valid entries
-                if(verbose) { System.out.println("Found recent entry:\n\t" + propFile); }
+                //if we've come this far we can set return value to true, ie found valid entries
+                if(verbose) { System.out.println("Found recent entry:\n\t" + path); }
                 ret = true;
             }
         } catch (IOException ioe) {
@@ -146,24 +146,17 @@ public class Model {
     }
 
     /**
-     * Set the data access object by creating a new instance of AlbumDAO.
-     * @see AlbumDAO
-     *
-     * @param create Whether to create a new database entry.
+     * Remove a database entry.
+     * @param name the name of the entry to remove.
+     * @return whether successfully removed entry.
      */
-    public void setDAO(boolean create) { dao = new AlbumDAO(getCurrentEntry(), create, verbose); }
-
-    /**
-     * Get the data access object.
-     * @return The data access object.
-     */
-    public AlbumDAO getDAO() { return dao; }
-
-    /**
-     * Initialize the database.
-     * @return Whether initializing was successful.
-     */
-    public boolean initDB() { return getDAO().initDB(); }
+    public boolean removeEntry(String name) {
+        boolean ret = false;
+        for(DBEntry e :entries) {
+            if( e.getDBName().equals(name) ) { ret = entries.remove(e); }
+        }
+        return ret;
+    }
 
     /**
      * Set the current database entry with the supplied database entry name..
@@ -212,6 +205,26 @@ public class Model {
         }
         return ret;
     }
+
+    /**
+     * Set the data access object by creating a new instance of AlbumDAO.
+     * @see AlbumDAO
+     *
+     * @param create Whether to create a new database entry.
+     */
+    public void setDAO(boolean create) { dao = new AlbumDAO(getCurrentEntry(), create, verbose); }
+
+    /**
+     * Get the data access object.
+     * @return The data access object.
+     */
+    public AlbumDAO getDAO() { return dao; }
+
+    /**
+     * Initialize the database.
+     * @return Whether initializing was successful.
+     */
+    public boolean initDB() { return getDAO().initDB(); }
 
     /**
      * Clear the set of mp3 entries.
@@ -542,6 +555,8 @@ public class Model {
         return ret;
     }
 
+    //############ File methods #################
+
     /**
      * Write a file with supplied content.
      * @param newContent The content.
@@ -554,6 +569,31 @@ public class Model {
             out.close();
         } catch (Throwable e) { e.printStackTrace(); }
     }
+
+    /**
+     * Delete a directory recursively.
+     * @param dir the directory.
+     * @return whether successfully deleted directory.
+     */
+    public boolean deleteDir(File dir) {
+        if ( dir.isDirectory() ) {
+            String[] children = dir.list();
+            for (int i=0; i<children.length; i++) {
+                boolean success = deleteDir( new File(dir, children[i]) );
+                if ( ! success) {
+                    return false;
+                } else {
+                    if(verbose) System.out.println("Deleting dir: " + dir);
+                }
+            }
+        } else {
+            if(verbose) System.out.println("Error: Removing collection dir, is not a directory:\n\t" + dir);
+        }
+
+        // The directory is now empty so delete it
+        return dir.delete();
+    }
+
 
     //############ Panel methods #################
 
@@ -582,14 +622,12 @@ public class Model {
         try {
             prepStmt = getDAO().getConnection().prepareStatement(selectQuery);
             for(int i = 0; i < vals.size(); i++) {
-                 prepStmt.setObject(i + 1, vals.get(i));
+                prepStmt.setObject(i + 1, vals.get(i));
             }
             ResultSet rs = getDAO().executePreparedStmt(prepStmt);
-            int rows = 0;
             while(rs.next()) {
                 results.add( rs.getString("title") );
                 if(getSonglist) ret.add( rs.getString("album") );
-                rows++;
             }
             Collections.sort(results);
             for(String s: results) listModel.addElement(s);
