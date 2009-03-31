@@ -28,5 +28,4 @@ Audio Mode    .......: #get_mode#
 ________________________Track Listing________________________
 
 #get_tracklist#
-
 Total length: (#get_totlength#)

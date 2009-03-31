@@ -458,7 +458,7 @@ public class Model {
                 String frequency = ( rs.getInt("frequency") != 0 ) ? rs.getInt("frequency") + " Hz" : "";
                 String mode = ( rs.getString("mode") != null) ? rs.getString("mode") : "";
                 Boolean various = rs.getBoolean("various");
-                Object subdirs = rs.getObject("subdirs");
+                String subdirs = rs.getString("subdirs");
                 String tracklist = getTracklisting(albumTitle, various, subdirs);
                 int length = rs.getInt("albumlength");
                 String albumlength = ( length != 0) ? getLengthAsString(length) : "";
@@ -494,21 +494,91 @@ public class Model {
      * @param subdirs sub directories of the album.
      * @return the track listing.
      */
-    public String getTracklisting(String albumTitle, Boolean various, Object subdirs) {
+    public String getTracklisting(String albumTitle, Boolean various, String albumSubdirs) {
+
+        // split album subdirs (if any) into an array
+        String[] subdirs = null;
+        if (albumSubdirs != null){
+            if( ! albumSubdirs.isEmpty() ) subdirs = albumSubdirs.split("\\, ");
+        }
 
         ArrayList<String> trackTitlelines = new ArrayList<String>();
         ArrayList<String> lengthlines = new ArrayList<String>();
-        int maxlength = 0;
+        StringBuffer ret = new StringBuffer();
 
-        String prepSelect =  "SELECT track, title, artist, songlength FROM Song WHERE album=?";
+        // get the max length of 'track ( - artist) - title' line
+        int maxlength = calculateLineLength(albumTitle, various);
+
+        // no subdirs
+        if(subdirs == null) {
+            String prepSelect =  "SELECT * FROM Song WHERE album=?";
+            try {
+                PreparedStatement stmt = getDAO().getConnection().prepareStatement(prepSelect);
+                stmt.setString(1, albumTitle);
+                ResultSet rs = getDAO().executePreparedStmt(stmt);
+                while( rs.next() ) {
+                    StringBuffer tracklist = new StringBuffer();
+                    tracklist.append( rs.getString("track") ).append(" - ");
+                    if(various) { tracklist.append( rs.getString("artist") ).append(" - "); }
+                    tracklist.append( rs.getString("title") );
+                    // store track + (artist) + title in arraylist
+                    trackTitlelines.add( tracklist.toString() );
+                    // store length in a separate arraylist, to format right alignment
+                    lengthlines.add( " (" + getLengthAsString( rs.getInt("songlength") ) + ")\n");
+                }
+                ret = buildTracklisting(trackTitlelines, lengthlines, maxlength);
+            } catch(SQLException e) { e.printStackTrace(); }
+        // subdirs
+        } else {
+            // iterate over subdirs
+            for(String s : subdirs) {
+                String prepSelect =  "SELECT * FROM Song WHERE album=? AND subdir=?";
+                try {
+                    PreparedStatement stmt = getDAO().getConnection().prepareStatement(prepSelect);
+                    stmt.setString(1, albumTitle);
+                    stmt.setString(2, s);
+                    ResultSet rs = getDAO().executePreparedStmt(stmt);
+                    StringBuffer listing = new StringBuffer();
+                    trackTitlelines.clear();
+                    lengthlines.clear();
+                    // add the subdir header
+                    listing.append(s).append("\n");
+                    while( rs.next() ) {
+                        StringBuffer tracklist = new StringBuffer();
+                        tracklist.append( rs.getString("track") ).append(" - ");
+                        if(various) { tracklist.append( rs.getString("artist") ).append(" - "); }
+                        tracklist.append( rs.getString("title") );
+                        // store track + (artist) + title in arraylist
+                        trackTitlelines.add( tracklist.toString() );
+                        // store length in a separate arraylist, to format right alignment
+                        lengthlines.add( " (" + getLengthAsString( rs.getInt("songlength") ) + ")\n");
+                    }
+                    // add the subdir track list
+                    listing.append( buildTracklisting(trackTitlelines, lengthlines, maxlength) );
+                    listing.append("\n");
+                    // add the list to the album tracklisting
+                    ret.append( listing.toString() );
+                } catch(SQLException e) { e.printStackTrace(); }
+            }
+        }
+        
+        return ret.toString();
+    }
+
+    /**
+     * Calculate the longest line length of 'track - title' or if various artists 'track - artist - title'.
+     * @param albumTitle the title of the album.
+     * @param various whether various artists album.
+     * @return the longest line length.
+     */
+    public int calculateLineLength(String albumTitle, Boolean various) {
+        int maxlength = 0;
+        String prepSelect =  "SELECT * FROM Song WHERE album=?";
         try {
             PreparedStatement stmt = getDAO().getConnection().prepareStatement(prepSelect);
             stmt.setString(1, albumTitle);
             ResultSet rs = getDAO().executePreparedStmt(stmt);
             while( rs.next() ) {
-
-                //TODO: ---> append subdirs to track listing
-
                 StringBuffer tracklist = new StringBuffer();
                 tracklist.append( rs.getString("track") ).append(" - ");
                 if(various) { tracklist.append( rs.getString("artist") ).append(" - "); }
@@ -516,14 +586,21 @@ public class Model {
                 // keep track of the longest trackTitle line
                 int linelength = tracklist.toString().length();
                 if(linelength > maxlength) maxlength = linelength;
-                // store track + (artist) + title in arraylist
-                trackTitlelines.add( tracklist.toString() );
-                // store length in a separate arraylist, to format right alignment
-                lengthlines.add( " (" + getLengthAsString( rs.getInt("songlength") ) + ")\n");
             }
 
         } catch(SQLException e) { e.printStackTrace(); }
 
+        return maxlength;
+    }
+
+    /**
+     * Build the track listing.
+     * @param trackTitlelines ArrayList of track/title lines.
+     * @param lengthlines ArrayList of song length lines.
+     * @param maxlength the longest track/title line length.
+     * @return the track listing.
+     */
+    public StringBuffer buildTracklisting(ArrayList<String> trackTitlelines, ArrayList<String> lengthlines, int maxlength) {
         StringBuffer ret = new StringBuffer();
         // iterate over trackTitle lines and append spaces to the length of the longest line (maxlength)
         for(int i = 0; i < trackTitlelines.size(); i++) {
@@ -534,10 +611,10 @@ public class Model {
                 for(int j = 0; j < spaces; j++) build.append(' ');
                 trackTitlelines.set( i, build.toString() );
             }
-            ret.append(trackTitlelines.get(i)).append( lengthlines.get(i) );
+            ret.append( trackTitlelines.get(i) ).append( lengthlines.get(i) );
         }
 
-        return ret.toString();
+        return ret;
     }
 
     /**

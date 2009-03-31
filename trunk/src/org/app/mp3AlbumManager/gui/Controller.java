@@ -215,17 +215,26 @@ public class Controller implements ActionListener {
                 // save the content in the selected nfo file
                 FileBrowser browse = new FileBrowser(JFileChooser.SAVE_DIALOG, JFileChooser.FILES_ONLY);
                 String saveNfo = browse.getTarget();
-                //TODO: NFO content should be fetched from preview
-                //if(saveNfo != null) model.writeFile(content, saveNfo);
-                if(saveNfo != null) model.writeFile(view.getTextAreaContent(), saveNfo);
+                if(saveNfo == null) return;
+                File saveNfoFile = new File(saveNfo);
+                // show confirmation if file already exists
+                if( saveNfoFile.exists() ) {
+                    int response = JOptionPane.showConfirmDialog (null,
+                            "Overwrite existing file?","Confirm Overwrite",
+                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (response != JOptionPane.OK_OPTION)
+                        return;
+                }
+                // write the file
+                model.writeFile(view.getTextAreaContent(), saveNfo);
             }
 
         } else if( actionCommand.equals("html") ) {
 
             // open a file browser to save the html file
             FileBrowser browse = new FileBrowser(JFileChooser.SAVE_DIALOG, JFileChooser.FILES_ONLY);
-            String saveHTML = browse.getTarget();
-
+            String saveHtml = browse.getTarget();
+            if(saveHtml == null) return;
             // get music dir
             String musicDir = model.getCurrentEntry().getMp3Dirname();
 
@@ -250,12 +259,22 @@ public class Controller implements ActionListener {
 
             // handle response from joptionpane
             if(option == JOptionPane.OK_OPTION) {
-                // save the content in the selected nfo file
-                if(saveHTML != null) {
-                    model.writeFile(content, saveHTML);
-                    LaunchBrowser browser = new LaunchBrowser(saveHTML);
-                    browser.launchFile();
+
+                // show confirmation if file already exists
+                File saveHtmlFile = new File(saveHtml);
+                if( saveHtmlFile.exists() ) {
+                    int response = JOptionPane.showConfirmDialog (null,
+                            "Overwrite existing file?","Confirm Overwrite",
+                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (response != JOptionPane.OK_OPTION)
+                        return;
                 }
+                // write the file
+                model.writeFile(content, saveHtml);
+                // launch the browser
+                LaunchBrowser browser = new LaunchBrowser(saveHtml);
+                browser.launchFile();
+
             }
 
         } else if( actionCommand.equals("edit") ) {
