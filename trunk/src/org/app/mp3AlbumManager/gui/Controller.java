@@ -30,9 +30,9 @@ import java.beans.PropertyChangeEvent;
  */
 public class Controller implements ActionListener {
 
-    private static final String APP_NAME = "Mp3AlbumManager";
-    private static final String APP_VERSION = "alpha-02";
-    private static final String APP_URL = "http://www.sb.bostream.se/lgh7339701/projects/mp3albummanager.html";
+    private String APP_NAME;
+    private String APP_VERSION;
+    private String APP_URL;
     /**
      * Constant for the All Albums item in the albums list.
      */
@@ -63,13 +63,17 @@ public class Controller implements ActionListener {
 
     private Color bgcolor;
 
-    public Controller(Model m, View v, boolean recent, boolean verbose, Color color) {
+    public Controller(Model m, View v, boolean recent, boolean verbose, Color color,
+                      String appName, String appVersion, String appUrl) {
 
         view = v;
         model = m;
         this.verbose = verbose;
         this.anyRecent = recent;
         bgcolor = color;
+        APP_NAME = appName;
+        APP_VERSION = appVersion;
+        APP_URL = appUrl;
 
         nrOfSongsInDB = 0;
 
@@ -528,8 +532,8 @@ public class Controller implements ActionListener {
 
                 view.enableMenuItem(view.menuItemClose);
                 view.enableButton(view.closeButton);
-                view.enableMenuItem(view.menuItemSearch);
-                view.enableButton(view.searchButton);
+                view.enableMenuItem(view.menuItemFind);
+                view.enableButton(view.findButton);
                 view.enableMenuItem(view.menuItemHTML);
                 view.enableButton(view.htmlButton);
 
@@ -1063,8 +1067,8 @@ public class Controller implements ActionListener {
 
                 view.enableMenuItem(view.menuItemClose);
                 view.enableButton(view.closeButton);
-                view.enableMenuItem(view.menuItemSearch);
-                view.enableButton(view.searchButton);
+                view.enableMenuItem(view.menuItemFind);
+                view.enableButton(view.findButton);
                 view.enableMenuItem(view.menuItemHTML);
                 view.enableButton(view.htmlButton);
 
@@ -1193,8 +1197,8 @@ public class Controller implements ActionListener {
                 view.disableButton(view.newButton);
                 view.enableMenuItem(view.menuItemClose);
                 view.enableButton(view.closeButton);
-                view.enableMenuItem(view.menuItemSearch);
-                view.enableButton(view.searchButton);
+                view.enableMenuItem(view.menuItemFind);
+                view.enableButton(view.findButton);
                 view.enableMenuItem(view.menuItemHTML);
                 view.enableButton(view.htmlButton);
 
@@ -1265,8 +1269,8 @@ public class Controller implements ActionListener {
 
                     view.enableMenuItem(view.menuItemClose);
                     view.enableButton(view.closeButton);
-                    view.enableMenuItem(view.menuItemSearch);
-                    view.enableButton(view.searchButton);
+                    view.enableMenuItem(view.menuItemFind);
+                    view.enableButton(view.findButton);
                     view.enableMenuItem(view.menuItemHTML);
                     view.enableButton(view.htmlButton);
 

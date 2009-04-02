@@ -15,6 +15,10 @@ import java.util.logging.Level;
  */
 public class StartApp {
 
+    private static final String APP_NAME = "Mp3AlbumManager";
+    private static final String APP_VERSION = "0.1";
+    private static final String APP_URL = "http://www.sb.bostream.se/lgh7339701/projects/mp3albummanager.html";
+
     public static void main(String[] args) {
 
         SwingUtilities.invokeLater(
@@ -69,7 +73,7 @@ public class StartApp {
         Model model = new Model(verbose);
 
         boolean anyRecent = model.getRecentEntries();
-        new Controller(model, view, anyRecent, verbose, bg);
+        new Controller(model, view, anyRecent, verbose, bg, APP_NAME, APP_VERSION, APP_URL);
 
     }
 

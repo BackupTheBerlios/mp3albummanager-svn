@@ -25,7 +25,7 @@ public class AboutPanel extends JPanel implements ActionListener {
     private JLabel appLabel;
     private CLabel clickUrlLabel;
 
-    private static final String IMAGE_PATH = "res/graphics/about_logo.gif";
+    private static final String ICON_LOGO = "/res/graphics/logo.png";
 
     private Color bgcolor;
     private String name;
@@ -51,14 +51,15 @@ public class AboutPanel extends JPanel implements ActionListener {
         appLabel = aboutPanel.getLabel(ID_APPLABEL);
 
         //======== logoLabel ========
-        ImageIcon logo = new ImageIcon(IMAGE_PATH);
-        logoLabel.setIcon(logo);
+        ImageLoader loader = new ImageLoader();
+        ImageIcon imageLogo = loader.getImage(ICON_LOGO);
+        logoLabel.setIcon(imageLogo);
 
         //======== appLabel ========
         appLabel.setText(name + " " + version);
 
         //======== clickUrlLabel ========
-        clickUrlLabel = new CLabel(homepage);
+        clickUrlLabel = new CLabel("Homepage");
 
         clickUrlLabel.setClickable(true, this, null);
 
