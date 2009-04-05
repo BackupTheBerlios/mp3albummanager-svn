@@ -192,23 +192,41 @@ public class DetailsPanel extends JPanel implements ItemListener {
 
     // SETTERS
 
-    public void setTrackTextField(String text) { trackTextField.setText(text); }
+    public void setTrackTextField(String text) {  trackTextField.setText(text); }
 
-    public void setArtistTextField(String text) { artistTextField.setText(text); }
+    public void setArtistTextField(String text) {
+        artistTextField.setText(text);
+        artistTextField.setCaretPosition(0);
+    }
 
-    public void setTitleTextField(String text) { titleTextField.setText(text); }
+    public void setTitleTextField(String text) {
+        titleTextField.setText(text);
+        titleTextField.setCaretPosition(0);
+    }
 
-    public void setSubdirTextField(String text) { subdirTextField.setText(text); }
+    public void setSubdirTextField(String text) {
+        subdirTextField.setText(text);
+        subdirTextField.setCaretPosition(0);
+    }
 
     public void setLengthTextField(String text) { lengthTextField.setText(text); }
 
     public void setYearTextField(String text) { yearTextField.setText(text); }
 
-    public void setGenreTextField(String text) { genreTextField.setText(text); }
+    public void setGenreTextField(String text) {
+        genreTextField.setText(text);
+        genreTextField.setCaretPosition(0);
+    }
 
-    public void setTagTextField(String text) { tagTextField.setText(text); }
+    public void setTagTextField(String text) {
+        tagTextField.setText(text);
+        tagTextField.setCaretPosition(0);
+    }
 
-    public void setLameTextField(String text) { lameTextField.setText(text); }
+    public void setLameTextField(String text) {
+        lameTextField.setText(text);
+        lameTextField.setCaretPosition(0);
+    }
 
     public void setBitrateTextField(String text) { bitrateTextField.setText(text); }
 
@@ -271,29 +289,29 @@ public class DetailsPanel extends JPanel implements ItemListener {
         Object source = ie.getItemSelectable();
 
         if( source == yearComboBox ) {
-            yearTextField.setText( getYearComboBox() );
+            setYearTextField( getYearComboBox() );
         } else if( source == genreComboBox ) {
-            genreTextField.setText( getGenreComboBox() );
+            setGenreTextField( getGenreComboBox() );
         } else if( source == tagComboBox ) {
-            tagTextField.setText( getTagComboBox() );
+            setTagTextField( getTagComboBox() );
         } else if( source == lameComboBox ) {
-            lameTextField.setText( getLameComboBox() );
+            setLameTextField( getLameComboBox() );
         } else if( source == bitrateComboBox ) {
             String comboValue = getBitrateComboBox();
             if(comboValue == null) return;
             // set both vbr & bitrate
             if(comboValue.startsWith("~")) {
-                bitrateTextField.setText( comboValue.substring(1) ); // omit the ~
+                setBitrateTextField( comboValue.substring(1) ); // omit the ~
                 setVbr();
             } else {
                 setNotVbr();
-                bitrateTextField.setText( comboValue );
+                setBitrateTextField( comboValue );
             }
 
         } else if( source == frequencyComboBox ) {
-            frequencyTextField.setText( getFrequencyComboBox() );
+            setFrequencyTextField( getFrequencyComboBox() );
         } else if( source == modeComboBox ) {
-            modeTextField.setText( getModeComboBox() );
+            setModeTextField( getModeComboBox() );
         }
 
     } // end listener method

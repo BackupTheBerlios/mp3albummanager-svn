@@ -58,6 +58,8 @@ public class Model {
     private final List<String[]> sortedMp3entries;
     private final Set<String> albumEntries;
 
+    private String selectedSongFilename, selectedAlbumDirectory, selectedAlbumTitle;
+
     public Model(boolean verbose) {
 
         this.verbose = verbose;
@@ -674,6 +676,12 @@ public class Model {
 
     //############ Panel methods #################
 
+    /**
+     * Set list content for both albumlist and songlist.
+     * @param listPanel the list panel.
+     * @param albumsQuery select query for the albumlist.
+     * @param songsQuery select query for the songlist.
+     */
     public void setListContent(ListPanel listPanel, String albumsQuery, String songsQuery) {
 
         ResultSet rs = getDAO().doSelectQuery(albumsQuery, getDAO().getConnection(), false);
@@ -691,7 +699,15 @@ public class Model {
         } catch(SQLException e) { e.printStackTrace(); }
     }
 
-    public Set setListContent(DefaultListModel listModel, String selectQuery, ArrayList<Object> vals, boolean getSonglist) {
+    /**
+     * Get the list content for albumlist or songlist.
+     * @param listModel the list model.
+     * @param selectQuery the select query.
+     * @param vals the values for the prepared statement.
+     * @param getSonglist whether to get songlist or not.
+     * @return the list content as a Set.
+     */
+    public Set getListContent(DefaultListModel listModel, String selectQuery, ArrayList<Object> vals, boolean getSonglist) {
 
         ArrayList<String> results = new ArrayList<String>();
         Set<String> ret = new HashSet<String>();
@@ -713,6 +729,18 @@ public class Model {
         }
         return ret;
     }
+
+    public String getSelectedSongFilename() { return selectedSongFilename; }
+
+    public void setSelectedSongFilename(String filename) { selectedSongFilename = filename; }
+
+    public String getSelectedAlbumDirectory() { return selectedAlbumDirectory; }
+
+    public void setSelectedAlbumDirectory(String directory) { selectedAlbumDirectory = directory; }
+
+    public String getSelectedAlbumTitle() { return selectedAlbumTitle; }
+
+    public void setSelectedAlbumTitle(String title) { selectedAlbumTitle = title; }
 }
 
 //############ Inner classes #################

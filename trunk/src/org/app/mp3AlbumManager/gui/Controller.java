@@ -38,6 +38,9 @@ public class Controller implements ActionListener {
      */
     private static final String ALL_ALBUMS_ITEM = "-> ALL Albums";
     private static final String SEARCH_RESULTS_ITEM = "-> SEARCH Results";
+
+    private String ALBUM_TABLE, SONG_TABLE, ALBUM_PK_DIR, SONG_PK_FILENAME;
+
     private boolean searchForSongs;
     private final View view;
     private final Model model;
@@ -49,7 +52,7 @@ public class Controller implements ActionListener {
     private CreateDBPanel createPanel;
     private InfoDBPanel infoPanel;
     private ListPanel listPanel;
-    private String selectedSongFilename, selectedAlbumDirectory, selAlbumTitle;
+    private String selAlbumTitle; // selectedSongFilename, selectedAlbumDirectory
     private DetailsPanel detailsPanel;
     private SearchPanel searchPanel;
     private AboutPanel aboutPanel;
@@ -57,7 +60,7 @@ public class Controller implements ActionListener {
     private String currAlbumQuery, currSongQuery, currSearchQuery;
     private ArrayList<Object> currPrepVals;
 
-    public int nrOfSongsInDB;
+    public int nrOfSongsInCollection;
 
     private Task updateTask;
 
@@ -75,7 +78,8 @@ public class Controller implements ActionListener {
         APP_VERSION = appVersion;
         APP_URL = appUrl;
 
-        nrOfSongsInDB = 0;
+
+        nrOfSongsInCollection = 0;
 
         // Add action listener to buttons in view
         view.menuActionListeners(this);
@@ -200,10 +204,10 @@ public class Controller implements ActionListener {
             }
         } else if( actionCommand.equals("nfo") ) {
 
-            // get selected album in listPanel
-            selAlbumTitle = (String) listPanel.albumList.getSelectedValue();
+            // set selected album in listPanel
+            model.setSelectedAlbumTitle( (String) listPanel.albumList.getSelectedValue() );
             // get the nfo content
-            StringBuffer content = model.getNfoContent(selAlbumTitle);
+            StringBuffer content = model.getNfoContent( model.getSelectedAlbumTitle() );
 
             // get a preformatted jtextarea from view
             JTextArea nfoContent = view.setTextAreaContent( content.toString() );
@@ -244,7 +248,7 @@ public class Controller implements ActionListener {
 
             // get search query
             String searchQuery = model.getDAO().getCurrentSearchQuery();
-            if(searchQuery == null) { searchQuery = "SELECT * FROM Album"; }
+            if(searchQuery == null) { searchQuery = "SELECT * FROM " + ALBUM_TABLE; }
 
             // get album list from listPanel
             String[] albums = listPanel.getElementsFromAlbumList();
@@ -253,7 +257,8 @@ public class Controller implements ActionListener {
             // remove the ALL ALBUMS item in the album list
             List<String> albumList = new ArrayList<String>( Arrays.asList(albums) );
             albumList.removeAll( Arrays.asList(ALL_ALBUMS_ITEM) );
-            albums = albumList.toArray(new String[0]);
+            //albums = albumList.toArray(new String[0]);
+            albums = albumList.toArray(new String[albumList.size()]);
 
             // get generated html content
             StringBuffer content = model.getHtmlContent(musicDir, searchQuery, albums);
@@ -294,12 +299,84 @@ public class Controller implements ActionListener {
 
         } else if( actionCommand.equals("delete") ) {
             //TODO: implement actions for Delete
+            String table="", field="", selectedItem="";
+            boolean albumSelected = false;
             // get the selected album or song
+            if( model.getSelectedAlbumDirectory() == null & model.getSelectedSongFilename() == null) {
+                // do nothing (this shouldn't happen)
+            } else if( model.getSelectedAlbumDirectory() != null) {
+                // an album is selected
+                table = ALBUM_TABLE;
+                field = ALBUM_PK_DIR;
+                selectedItem = model.getSelectedAlbumDirectory();
+                albumSelected = true;
+            } else {
+                // a song is selected
+                table = SONG_TABLE;
+                field = SONG_PK_FILENAME;
+                selectedItem = model.getSelectedSongFilename();
+            }
+            if(verbose) System.out.println("Confirm deleting " + table + "\n\t" + selectedItem);
             // show optionpane confirmation dialog
+            int response = JOptionPane.showConfirmDialog (null,
+                            "Are you sure you want to delete this " + table.toLowerCase() + "?",
+                            "Confirm Overwrite",
+                            JOptionPane.OK_CANCEL_OPTION,
+                            JOptionPane.QUESTION_MESSAGE);
             // if OK:
-            //      construct the query
-            //      execute query
-            //      update albums and songs in listPanel
+            if (response == JOptionPane.OK_OPTION) {
+                // delete the selected item (album or song)
+                String deleteQuery = "DELETE FROM " + table + " WHERE " + field + "=?";
+                if(verbose) System.out.println("Delete query:\n\t" + deleteQuery);
+                boolean success = false;
+                try {
+                    PreparedStatement stmt = model.getDAO().getConnection().prepareStatement(deleteQuery);
+                    stmt.setString(1, selectedItem);
+                    success = model.getDAO().insertValues(stmt);
+                    // if an album was selected
+                    if(albumSelected) {
+                        // select songs with matching album title
+                        String selectMatchingSongs = "SELECT " + SONG_PK_FILENAME + " FROM " + SONG_TABLE + " WHERE album=?";
+                        PreparedStatement prepStmt = model.getDAO().getConnection().prepareStatement(selectMatchingSongs);
+                        prepStmt.setString(1, model.getSelectedAlbumTitle() );
+                        ResultSet rs = model.getDAO().executePreparedStmt(prepStmt);
+                        // store matching songs in an array
+                        ArrayList<String> albumSongs = new ArrayList<String>();
+                        if(verbose) System.out.println("Matching songs:");
+                        while( rs.next() ) {
+                            albumSongs.add( rs.getString("filename") );
+                            if(verbose) System.out.println("\t" + rs.getString("filename") );
+                        }
+                        // loop over matching songs and delete them
+                        String deleteMatchingSongs;
+                        for(String filename : albumSongs) {
+
+                            deleteMatchingSongs = "DELETE FROM " + SONG_TABLE + " WHERE " + SONG_PK_FILENAME + "=?";
+                            prepStmt = model.getDAO().getConnection().prepareStatement(deleteMatchingSongs);
+                            prepStmt.setString(1, filename);
+                            success = model.getDAO().insertValues(prepStmt);
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                // update albums and songs in listPanel
+                if(success) {
+                    if(verbose) System.out.println(table + " was deleted successfully");
+                    // remove previous content of albumlist and songlist
+                    listPanel.albumListModel.removeAllElements();
+                    listPanel.songListModel.removeAllElements();
+                    // add "ALL ALBUMS" to the top of the albumlist in the listpanel
+                    listPanel.albumListModel.addElement( ALL_ALBUMS_ITEM );
+
+                    //CONNECTION -> SELECT QUERIES
+                    currAlbumQuery = "SELECT title FROM " + ALBUM_TABLE + " ORDER BY title";
+                    currSongQuery = "SELECT title FROM " + SONG_TABLE + " ORDER BY title";
+                    model.setListContent(listPanel, currAlbumQuery, currSongQuery);
+                }
+            }
+
+
         } else if( actionCommand.equals("search") ) {
 
             // remove other panels
@@ -368,6 +445,11 @@ public class Controller implements ActionListener {
                 if(conn == null) {
                     openPanel.setMessageLabel("Problem connecting to database. Please try again.");
                 } else {
+                    // set the table names and primary key field names
+                    ALBUM_TABLE = model.getDAO().TABLE_ALBUM_NAME;
+                    SONG_TABLE = model.getDAO().TABLE_SONG_NAME;
+                    ALBUM_PK_DIR = model.getDAO().TABLE_ALBUM_PK_FIELD;
+                    SONG_PK_FILENAME = model.getDAO().TABLE_SONG_PK_FIELD;
                     showDBInfoPanel(mp3Dir);
                 }
 
@@ -400,6 +482,11 @@ public class Controller implements ActionListener {
                 model.setDAO(doCreate);
                 if( model.initDB() ) {
                     model.getDAO().createTables( model.getDAO().connect(user, pass) );
+                    // set the table names and primary key field names
+                    ALBUM_TABLE = model.getDAO().TABLE_ALBUM_NAME;
+                    SONG_TABLE = model.getDAO().TABLE_SONG_NAME;
+                    ALBUM_PK_DIR = model.getDAO().TABLE_ALBUM_PK_FIELD;
+                    SONG_PK_FILENAME = model.getDAO().TABLE_SONG_PK_FIELD;
                     // continue to database infoPanel
                     showDBInfoPanel(mp3Dir);
                 } else {
@@ -456,12 +543,12 @@ public class Controller implements ActionListener {
             // setup menu items (nothing to do, same setup as in new & close)
 
             //CONNECTION -> SELECT QUERY
-            String query = "SELECT filename FROM Song";
+            String query = "SELECT " + SONG_PK_FILENAME + " FROM " + SONG_TABLE;
             ResultSet rs = model.getDAO().doSelectQuery( query, model.getDAO().getConnection(), false);
-            nrOfSongsInDB = 0;
+            nrOfSongsInCollection = 0;
             try {
                 while(rs.next()) {
-                    nrOfSongsInDB++;
+                    nrOfSongsInCollection++;
                 }
             } catch(SQLException e) { e.printStackTrace(); }
 
@@ -484,7 +571,7 @@ public class Controller implements ActionListener {
             model.addMp3Files(currentMp3dir);
 
             // format text to send to infopanel labels
-            String firstLabel = String.format("%d songs in database.", nrOfSongsInDB);
+            String firstLabel = String.format("%d songs in collection.", nrOfSongsInCollection);
             String secondLabel = String.format("%d songs found in album directory.", model.getNrOfMp3s() );
 
             infoPanel = new InfoDBPanel(firstLabel, secondLabel, bgcolor);
@@ -495,7 +582,7 @@ public class Controller implements ActionListener {
             //      file exists but not found in db -> new
 
             // show update button if nrOfmp3s > 0 and nrOfmp3s != nrOfsongs
-            if( model.getNrOfMp3s() > 0 && model.getNrOfMp3s() != nrOfSongsInDB) {
+            if( model.getNrOfMp3s() > 0 && model.getNrOfMp3s() != nrOfSongsInCollection) {
                 infoPanel.showButton(infoPanel.updateButton, true);
             }
 
@@ -544,8 +631,8 @@ public class Controller implements ActionListener {
                 listPanel.albumListModel.addElement( ALL_ALBUMS_ITEM );
 
                 //CONNECTION -> SELECT QUERIES
-                currAlbumQuery = "SELECT title FROM Album ORDER BY title";
-                currSongQuery = "SELECT title FROM Song ORDER BY title";
+                currAlbumQuery = "SELECT title FROM " + ALBUM_TABLE + " ORDER BY title";
+                currSongQuery = "SELECT title FROM " + SONG_TABLE + " ORDER BY title";
                 model.setListContent(listPanel, currAlbumQuery, currSongQuery);
 
                 listPanel.showPanel();
@@ -677,10 +764,10 @@ public class Controller implements ActionListener {
 
             if(verbose) System.out.println("\nUPDATING DATABASE:");
             //CONNECTION -> INSERT QUERIES
-            String insertAlbum = "INSERT INTO Album (directory, subdirs, tracks, artist, title, various, albumlength, " +
+            String insertAlbum = "INSERT INTO " + ALBUM_TABLE + " (" + ALBUM_PK_DIR + ", subdirs, tracks, artist, title, various, albumlength, " +
                     "albumyear, genre, tag, lame, bitrate, vbr, frequency, mode) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            String insertSongs = "INSERT INTO Song (filename, album, subdir, track, artist, title, songlength, songyear, " +
+            String insertSongs = "INSERT INTO " + SONG_TABLE + " (" + SONG_PK_FILENAME + ", album, subdir, track, artist, title, songlength, songyear, " +
                     "genre, tag, lame, bitrate, vbr, frequency, mode) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement stmtAlbum, stmtSong;
@@ -750,7 +837,7 @@ public class Controller implements ActionListener {
                         infoPanel.getTheProgressbar().setValue(progressValue);
 
                         if(verbose) System.out.println(s.getTrack() + " - " + s.getTitle() );
-                        nrOfSongsInDB = inserted;
+                        nrOfSongsInCollection = inserted;
                     } // end song iteration
                     if(verbose) System.out.println();
 
@@ -772,10 +859,10 @@ public class Controller implements ActionListener {
             // denable the nextButton in infoPanel
             infoPanel.enableButton(infoPanel.nextButton, true);
             // update text in labels
-            infoPanel.setDBLabelText( String.format("%d songs in database.", nrOfSongsInDB) );
+            infoPanel.setDBLabelText( String.format("%d songs in database.", nrOfSongsInCollection) );
             long taskTimeMs  = System.currentTimeMillis( ) - startTimeMs;
             //if(verbose) 
-            System.out.println("\nTASK DONE: \nnrOfSongsInDB = " + nrOfSongsInDB + "\ntaskTime = " + taskTimeMs / 1000 + " seconds\n");
+            System.out.println("\nTASK DONE: \nnrOfSongsInCollection = " + nrOfSongsInCollection + "\ntaskTime = " + taskTimeMs / 1000 + " seconds\n");
             // hide the update button
             infoPanel.showButton(infoPanel.updateButton, false);
 
@@ -807,15 +894,17 @@ public class Controller implements ActionListener {
 
                     } else {
                         //------ an album is selected --------
-                        selAlbumTitle = (String) listPanel.albumList.getSelectedValue();
-                        if(verbose) System.out.println("\nSelected an album: " + selAlbumTitle);
+                        //set selected album title
+                        model.setSelectedAlbumTitle( (String) listPanel.albumList.getSelectedValue() );
+                        if(verbose) System.out.println("\nSelected an album: " + model.getSelectedAlbumTitle() );
 
                         // empty all fields in details panel
                         detailsPanel.resetAllFields();
 
                         //------ ALL ALBUMS or SEARCH RESULTS is selected --------
 
-                        if( selAlbumTitle.equals(ALL_ALBUMS_ITEM) | selAlbumTitle.equals(SEARCH_RESULTS_ITEM) ) {
+                        if( model.getSelectedAlbumTitle().equals(ALL_ALBUMS_ITEM)
+                                | model.getSelectedAlbumTitle().equals(SEARCH_RESULTS_ITEM) ) {
                             // disable edit, delete, NFO in menu
                             view.disableMenuItem(view.menuItemEdit);
                             view.disableButton(view.editButton);
@@ -832,18 +921,18 @@ public class Controller implements ActionListener {
                             if(currSearchQuery != null) listPanel.albumListModel.addElement( SEARCH_RESULTS_ITEM );
 
                             //------ SEARCH RESULTS is selected --------
-                            if( selAlbumTitle.equals(SEARCH_RESULTS_ITEM) ) {
+                            if( model.getSelectedAlbumTitle().equals(SEARCH_RESULTS_ITEM) ) {
 
                                 DefaultListModel listModel = (searchForSongs) ? listPanel.songListModel : listPanel.albumListModel;
-                                Set albumList = model.setListContent(listModel, currSearchQuery, currPrepVals, searchForSongs);
+                                Set albumList = model.getListContent(listModel, currSearchQuery, currPrepVals, searchForSongs);
                                 if(searchForSongs) {
                                     for(Object o: albumList) listPanel.albumListModel.addElement(o);
                                 }
                                 listPanel.setMessageLabel( searchPanel.getHumanReadableSearch() );
                             } else {
                                 // show all albums & songs in lists
-                                String albumsQuery = "SELECT * FROM Album ORDER BY title";
-                                String songsQuery = "SELECT * FROM Song ORDER BY title";
+                                String albumsQuery = "SELECT * FROM " + ALBUM_TABLE + " ORDER BY title";
+                                String songsQuery = "SELECT * FROM " + SONG_TABLE + " ORDER BY title";
                                 model.setListContent(listPanel, albumsQuery, songsQuery);
                             }
                             return;
@@ -863,10 +952,10 @@ public class Controller implements ActionListener {
 
                         // get the album properties for the selected album
                         Album selAlbum = null;
-                        String prepSelect = "SELECT * FROM Album WHERE title=?";
+                        String prepSelect = "SELECT * FROM " + ALBUM_TABLE + " WHERE title=?";
                         try {
                             PreparedStatement stmt = model.getDAO().getConnection().prepareStatement(prepSelect);
-                            stmt.setString(1, selAlbumTitle);
+                            stmt.setString(1, model.getSelectedAlbumTitle() );
                             ResultSet rs = model.getDAO().executePreparedStmt(stmt);
                             while( rs.next() ) {
                                 String albumDirectory = rs.getString("directory");
@@ -893,7 +982,9 @@ public class Controller implements ActionListener {
                                 // create an album instance
                                 selAlbum = new Album(new File( albumDirectory ), albumArtist, albumTitle, albumYear, variousAlbum );
                                 // set the selected album (to be used for edit command)
-                                selectedAlbumDirectory = albumDirectory;
+                                model.setSelectedAlbumDirectory(albumDirectory);
+                                // and set selected song to null
+                                model.setSelectedSongFilename(null);
                             }
                         } catch(SQLException e2) { e2.printStackTrace(); }
 
@@ -901,10 +992,10 @@ public class Controller implements ActionListener {
                         listPanel.songListModel.removeAllElements();
                         // get the song properties to fill the keys of the album maps
                         Song albumSong;
-                        String prepSonglist = "SELECT * FROM Song WHERE album=? ORDER BY title";
+                        String prepSonglist = "SELECT * FROM " + SONG_TABLE + " WHERE album=? ORDER BY title";
                         try {
                             PreparedStatement stmtSonglist = model.getDAO().getConnection().prepareStatement(prepSonglist);
-                            stmtSonglist.setString(1, selAlbumTitle);
+                            stmtSonglist.setString(1, model.getSelectedAlbumTitle() );
                             ResultSet rs = model.getDAO().executePreparedStmt(stmtSonglist);
                             while(rs.next()) {
                                 // get the song properties
@@ -1011,7 +1102,7 @@ public class Controller implements ActionListener {
                         view.disableButton(view.nfoButton);
 
                         // get the song properties
-                        String prepSelect = "SELECT * FROM Song WHERE title=?";
+                        String prepSelect = "SELECT * FROM " + SONG_TABLE + " WHERE title=?";
                         try {
                             PreparedStatement stmt = model.getDAO().getConnection().prepareStatement(prepSelect);
                             stmt.setString(1, selectedSong);
@@ -1033,7 +1124,9 @@ public class Controller implements ActionListener {
                                 if( rs.getBoolean("vbr") ) detailsPanel.setVbr();  else detailsPanel.setNotVbr();
                                 detailsPanel.setYearTextField( rs.getString("songyear") );
                                 // set the selected song (to be used by edit command)
-                                selectedSongFilename = rs.getString("filename");
+                                model.setSelectedSongFilename( rs.getString("filename") );
+                                // and set selected album to null
+                                model.setSelectedAlbumDirectory(null);
                             }
                         } catch(SQLException e5) { e5.printStackTrace(); }
                     }
@@ -1109,31 +1202,33 @@ public class Controller implements ActionListener {
                         // ALL ALBUMS is selected
                     } else {
                         // a single album is selected
-                        if(verbose) System.out.println("Edit album: " + selectedAlbumDirectory);
+                        if(verbose) System.out.println("Edit album: " + model.getSelectedAlbumDirectory());
                         try {
                             // execute the select song query
                             // select songs with matching album title
-                            String selectMatchingSongs = "SELECT filename FROM Song WHERE album=?";
+                            String selectMatchingSongs = "SELECT " + SONG_PK_FILENAME + " FROM " + SONG_TABLE + " WHERE album=?";
                             prepStmt = model.getDAO().getConnection().prepareStatement(selectMatchingSongs);
-                            prepStmt.setString(1, selAlbumTitle);
+                            prepStmt.setString(1, model.getSelectedAlbumTitle() );
                             ResultSet rs = model.getDAO().executePreparedStmt(prepStmt);
                             //prepStmt.close();
                             ArrayList<String> albumSongs = new ArrayList<String>();
-                            while( rs.next() ) { albumSongs.add( rs.getString("filename") ); }
+                            while( rs.next() ) {
+                                albumSongs.add( rs.getString("filename") );
+                            }
                             rs.close();
 
                             String updateMatchingSongs;
                             PreparedStatement stmt;
                             for(String filename : albumSongs) {
                                 // update album title for these songs
-                                updateMatchingSongs = "UPDATE Song SET album=? WHERE filename=?";
+                                updateMatchingSongs = "UPDATE " + SONG_TABLE + " SET album=? WHERE filename=?";
                                 stmt = model.getDAO().getConnection().prepareStatement(updateMatchingSongs);
                                 stmt.setString(1, title);
                                 stmt.setString(2, filename);
                                 model.getDAO().insertValues(stmt);
                             }
                             // query to update album
-                            updateQuery = "UPDATE Album SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, various=?, vbr=?, albumyear=? " +
+                            updateQuery = "UPDATE " + ALBUM_TABLE + " SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, various=?, vbr=?, albumyear=? " +
                                     "WHERE directory=?";
                             // execute query to update album
                             prepStmt = model.getDAO().getConnection().prepareStatement(updateQuery);
@@ -1148,7 +1243,7 @@ public class Controller implements ActionListener {
                             prepStmt.setBoolean(9, various);
                             prepStmt.setBoolean(10, vbr);
                             prepStmt.setString(11, year);
-                            prepStmt.setString(12, selectedAlbumDirectory);
+                            prepStmt.setString(12, model.getSelectedAlbumDirectory());
                             success = model.getDAO().insertValues(prepStmt);
                             type = "Album";
                             prepStmt.close();
@@ -1157,8 +1252,8 @@ public class Controller implements ActionListener {
                 } else {
                     // a song is selected
 
-                    if(verbose) System.out.println("Edit song: " + selectedSongFilename);
-                    updateQuery = "UPDATE Song SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, track=?, vbr=?, songyear=? " +
+                    if(verbose) System.out.println("Edit song: " + model.getSelectedSongFilename());
+                    updateQuery = "UPDATE " + SONG_TABLE + " SET artist=?, bitrate=?, frequency=?, genre=?, lame=?, mode=?, tag=?, title=?, track=?, vbr=?, songyear=? " +
                             "WHERE filename=?";
                     try {
                         prepStmt = model.getDAO().getConnection().prepareStatement(updateQuery);
@@ -1173,7 +1268,7 @@ public class Controller implements ActionListener {
                         prepStmt.setString(9, track);
                         prepStmt.setBoolean(10, vbr);
                         prepStmt.setString(11, year);
-                        prepStmt.setString(12, selectedSongFilename);
+                        prepStmt.setString(12, model.getSelectedSongFilename());
 
                         success = model.getDAO().insertValues(prepStmt);
                         type = "Song";
@@ -1202,31 +1297,16 @@ public class Controller implements ActionListener {
                 view.enableMenuItem(view.menuItemHTML);
                 view.enableButton(view.htmlButton);
 
-                //update albumlist
+                // remove previous content of albumlist and songlist
                 listPanel.albumListModel.removeAllElements();
+                listPanel.songListModel.removeAllElements();
                 // add "ALL ALBUMS" to the top of the albumlist in the listpanel
                 listPanel.albumListModel.addElement( ALL_ALBUMS_ITEM );
 
                 //CONNECTION -> SELECT QUERIES
-                String albumsQuery = "SELECT title FROM Album ORDER BY title";
-                ResultSet rs = model.getDAO().doSelectQuery(albumsQuery, model.getDAO().getConnection(), false);
-                try {
-                    while(rs.next()) {
-                        listPanel.albumListModel.addElement( rs.getString("title") );
-                    }
-                } catch(SQLException e) { e.printStackTrace(); }
-
-                // update songlist
-                listPanel.songListModel.removeAllElements();
-                String songsQuery = "SELECT title FROM Song ORDER BY title";
-                rs = model.getDAO().doSelectQuery(songsQuery, model.getDAO().getConnection(), false);
-                try {
-                    while(rs.next()) {
-                        listPanel.songListModel.addElement( rs.getString("title") );
-                    }
-                } catch(SQLException e) { e.printStackTrace(); }
-
-
+                currAlbumQuery = "SELECT title FROM " + ALBUM_TABLE + " ORDER BY title";
+                currSongQuery = "SELECT title FROM " + SONG_TABLE + " ORDER BY title";
+                model.setListContent(listPanel, currAlbumQuery, currSongQuery);
 
             }
         }
@@ -1284,14 +1364,20 @@ public class Controller implements ActionListener {
 
                     //update the listPanel
                     DefaultListModel listModel;
+                    // find out if it's a song search or not
                     searchForSongs = searchPanel.getCurrentSelect().equals("Song");
+                    // and set listmodel accordingly
                     listModel = (searchForSongs) ? listPanel.songListModel : listPanel.albumListModel;
+                    // get the search query
                     currSearchQuery = searchPanel.getQuery();
+                    // get the prepared statements
                     currPrepVals = searchPanel.getPrepVals();
-                    Set albumList = model.setListContent(listModel, currSearchQuery, currPrepVals, searchForSongs);
+                    // get the search results as a Set
+                    Set albumList = model.getListContent(listModel, currSearchQuery, currPrepVals, searchForSongs);
                     if(searchForSongs) {
                         for(Object o: albumList) listPanel.albumListModel.addElement(o);
                     }
+                    // set message label to the human readable search
                     listPanel.setMessageLabel( searchPanel.getHumanReadableSearch() );
                     // show the listPanel
                     listPanel.showPanel();

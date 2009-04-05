@@ -22,7 +22,13 @@ public class AlbumDAO {
      * The properties file for a database entry.
      */
     public static final String DB_PROPERTIES_FILE = "database.properties";
-
+    /**
+     * The names and primary key fields of the tables
+     */
+    public final String TABLE_ALBUM_NAME = "Album";
+    public final String TABLE_ALBUM_PK_FIELD = "directory";
+    public final String TABLE_SONG_NAME = "Song";
+    public final String TABLE_SONG_PK_FIELD = "filename";
     private Properties dbProperties;
     private final DBEntry currentEntry;
     private final boolean doCreate;
@@ -415,8 +421,8 @@ public class AlbumDAO {
     public void createTables(Connection conn)  {
 
         String strCreateAlbumTable =
-                "CREATE TABLE IF NOT EXISTS Album (" +
-                        "   directory   VARCHAR(256) PRIMARY KEY," +
+                "CREATE TABLE IF NOT EXISTS " + TABLE_ALBUM_NAME + " (" +
+                        "   " + TABLE_ALBUM_PK_FIELD + "   VARCHAR(256) PRIMARY KEY," +
                         "   subdirs     VARCHAR(256), " +
                         "   tracks      INTEGER, " +
                         "   artist      VARCHAR_IGNORECASE(64), " +
@@ -433,8 +439,8 @@ public class AlbumDAO {
                         "   mode        VARCHAR(32) " +
                         ")";
         String strCreateSongTable =
-                "CREATE TABLE IF NOT EXISTS Song (" +
-                        "   filename    varchar(256) PRIMARY KEY, " +
+                "CREATE TABLE IF NOT EXISTS " + TABLE_SONG_NAME + " (" +
+                        "   " + TABLE_SONG_PK_FIELD + "    varchar(256) PRIMARY KEY, " +
                         "   album      varchar_IGNORECASE(128), " +
                         "   subdir      varchar(128), " +
                         "   track       VARCHAR(8), " +
@@ -485,7 +491,7 @@ public class AlbumDAO {
 
         try {
             if( prepStmt.executeUpdate() == 0) {
-                if(verbose) System.err.println("INSERT FAILED:\n");
+                if(verbose) System.err.println("QUERY FAILED:\n");
                 return false;
             } else {
                 return true;
